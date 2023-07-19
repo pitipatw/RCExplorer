@@ -104,7 +104,7 @@ end
 function main()
 
     # Define Initial values
-    Beam_Span_Length = rand(Uniform(1, 250), 25, 1)
+    Beam_Span_Length = rand(Uniform(1, 250), 25, 1) #in
     println(Beam_Span_Length)
     fc′ = 4000.0 #psi
     b_w = 12.0 #in
@@ -116,8 +116,8 @@ function main()
     f_y = 60000.0 #psi
     j = 0.95 # assumption
     spacing_between_beams = 12.0 #ft
-    D = rand(Uniform(0, 10), 15, 1) #k/ft
-    L = 0.15 #k/ft # kip/ square feet # kip= 1000 pound force
+    D = rand(Uniform(0, 10), 18, 1) #k/ft
+    L = 1.5 #k/ft # kip/ square feet # kip= 1000 pound force
 
     ## Deflection Limitation from Table 24.2.2 from ACI
     # Flat roofs (Not supporting/ not attached to elements likely to be damaged by large deflection)
@@ -130,14 +130,19 @@ function main()
     # l/240
 
     total_combinations = length(Beam_Span_Length) * length(D)
-    values_of_max_δ = Array{Float64,1}()
-    plotting_points = Matrix{Float64}(undef, total_combinations, 2)
-    count = 0
+    values_of_total_deflection_within_limits = Array{Float64,1}()
+    values_of_total_deflection_out_of_limits = Array{Float64,1}()
+    #plotting_points = Matrix{Float64}(undef, total_combinations, 2)
+    beam_length_within_limits = Array{Float64,1}()
+    beam_length_out_of_limits = Array{Float64,1}()
+    dead_load_within_limits = Array{Float64,1}()
+    dead_load_out_of_limits = Array{Float64,1}()
+
 
     #Execution
     for each_length in Beam_Span_Length
         for each_dead_load in D
-            count += 1
+
             effective_width_b1 = convert_ft_to_in(each_length) / 4
             effective_width_b2 = b_w + (2 * 8 * h_f)
             effective_width_b3 = (convert_ft_to_in(spacing_between_beams))
@@ -151,18 +156,28 @@ function main()
             # Using basic combination 2 from 2.3.2 of ASCE standard
             # Using just dead loads first
 
-            required_design_strength = 1.4 * each_dead_load
-            plotting_points[count, :] = [each_length, each_dead_load]
-            max_δ = find_max_δ(required_design_strength, each_length, E, I_g)
-            push!(values_of_max_δ, max_δ)
-            println("mas δ is ", max_δ)
+            total_loads = (1.2 * each_dead_load * 1000) + (1.6 * L * 1000)  ## to change the units from kip to lbs, multiple D and L by 1000
+            #plotting_points[count, :] = [each_length, each_dead_load]
+            max_δ = find_max_δ(total_loads, each_length, E, I_g)
+            #Assuming that this is time dependent
+            λ_Δ = find_λ_Δ(find_ξ(60), find_ρ′(0, b, d))
+            println("λ_Δ is ", λ_Δ)
+            total_deflection = max_δ * λ_Δ
+            #total_deflection = max_δ
+            println("total_deflection is ", total_deflection)
 
-            deflection_limit = each_length / 480
+            deflection_limit = 25.4 * (each_length) / 480 ##bc each length is in in and this equation consider the length to be in mm
             println("deflection limit is ", deflection_limit)
 
-            if max_δ < deflection_limit
+            if total_deflection < deflection_limit
+                push!(beam_length_within_limits, each_length)
+                push!(dead_load_within_limits, each_dead_load)
+                push!(values_of_total_deflection_within_limits, total_deflection)
                 println(true)
             else
+                push!(beam_length_out_of_limits, each_length)
+                push!(dead_load_out_of_limits, each_dead_load)
+                push!(values_of_total_deflection_out_of_limits, total_deflection)
                 println(false)
             end
         end
@@ -171,10 +186,10 @@ function main()
     GLMakie.activate!()
     # tell julia to use GLMakie
     f = Figure(resolution=(1200, 800)) #initialize with resolution
-    ax = Axis3(f[1, 1], xlabel="Beam Length [In]", ylabel="Dead Load[kip/square ft]", zlabel="max deflection")
+    ax = Axis3(f[1, 1], xlabel="Beam Length [In]", ylabel="Dead Load[Psf]", zlabel="max deflection")
     #initialize 3d axis with labels
-    scatter!(ax, plotting_points[:, 1], plotting_points[:, 2], values_of_max_δ, color=values_of_max_δ) #plot all data
-
+    scatter!(ax, beam_length_within_limits, dead_load_within_limits, values_of_total_deflection_within_limits, color=values_of_total_deflection_within_limits) #plot all data
+    scatter!(ax, beam_length_out_of_limits, dead_load_out_of_limits, values_of_total_deflection_out_of_limits, color="gray") #plot all data
     return f
 
 

@@ -1,6 +1,8 @@
 module ServiceabilityConstraint
 using Distributions
-using Makie, GLMakie
+#using Makie, GLMakie
+using PlotlyJS, DataFrames
+
 
 #Assuming non crack, we will use I_g(gross Inertia) for calculation of beam defelction
 # Setting up Equations
@@ -56,6 +58,7 @@ end
 
 """
 Find time-dependent factor for sustained load
+ACI Table 24.2.4.1.3
 """
 function find_ξ(sustained_load_duration_in_months::Int64)
     if sustained_load_duration_in_months == 3
@@ -104,20 +107,23 @@ end
 function main()
 
     # Define Initial values
-    Beam_Span_Length = rand(Uniform(1, 250), 25, 1) #in
-    println(Beam_Span_Length)
+    # Example 5-4 RC textbook
+    Beam_Span_Length = 500 # in
     fc′ = 4000.0 #psi
-    b_w = 12.0 #in
-    h_f = 6.0 #in
-    h = 24.0 #in
-    d = h - 2.5 #in
+    b_w = rand(Uniform(1, 20), 10, 1) #in
+    h_f = rand(Uniform(2, 18), 10, 1) #in
+    h = rand(Uniform(2, 35), 10, 1) #in
+    d = Array{Float64,1}()
+    for h in h
+        push!(d, h - 2.5) #in
+    end
     M_u = 130000.0 #ft
     ϕ = 0.9 #no unit
     f_y = 60000.0 #psi
     j = 0.95 # assumption
     spacing_between_beams = 12.0 #ft
-    D = rand(Uniform(0, 10), 18, 1) #k/ft
-    L = 1.5 #k/ft # kip/ square feet # kip= 1000 pound force
+    dead_load = 2.5 #k/ft
+    live_load = 1.5 #k/ft # kip/ square feet # kip= 1000 pound force
 
     ## Deflection Limitation from Table 24.2.2 from ACI
     # Flat roofs (Not supporting/ not attached to elements likely to be damaged by large deflection)
@@ -129,68 +135,150 @@ function main()
     # Roof or floors (supporting/ attached to nonstructural elements NOT likely to be damaged by large deflection)
     # l/240
 
-    total_combinations = length(Beam_Span_Length) * length(D)
     values_of_total_deflection_within_limits = Array{Float64,1}()
     values_of_total_deflection_out_of_limits = Array{Float64,1}()
-    #plotting_points = Matrix{Float64}(undef, total_combinations, 2)
-    beam_length_within_limits = Array{Float64,1}()
-    beam_length_out_of_limits = Array{Float64,1}()
-    dead_load_within_limits = Array{Float64,1}()
-    dead_load_out_of_limits = Array{Float64,1}()
-
+    # beam_length_within_limits = Array{Float64,1}()
+    # beam_length_out_of_limits = Array{Float64,1}()
+    # dead_load_within_limits = Array{Float64,1}()
+    # dead_load_out_of_limits = Array{Float64,1}()
+    b_w_within_limits = Array{Float64,1}()
+    b_w_out_of_limits = Array{Float64,1}()
+    h_f_within_limits = Array{Float64,1}()
+    h_f_out_of_limits = Array{Float64,1}()
+    h_within_limits = Array{Float64,1}()
+    h_out_of_limits = Array{Float64,1}()
+    d_within_limits = Array{Float64,1}()
+    d_out_of_limits = Array{Float64,1}()
 
     #Execution
-    for each_length in Beam_Span_Length
-        for each_dead_load in D
+    for each_b_w in b_w
+        for each_h_f in h_f
+            for each_h in h
+                for each_d in d
+                    # for each_length in Beam_Span_Length ##These two lines are for 3d plotting with varying beam length and deadloads
+                    #     for each_dead_load in D
 
-            effective_width_b1 = convert_ft_to_in(each_length) / 4
-            effective_width_b2 = b_w + (2 * 8 * h_f)
-            effective_width_b3 = (convert_ft_to_in(spacing_between_beams))
+                    effective_width_b1 = convert_ft_to_in(Beam_Span_Length) / 4
+                    effective_width_b2 = each_b_w + (2 * 8 * each_h_f)
+                    effective_width_b3 = (convert_ft_to_in(spacing_between_beams))
 
-            b = min(effective_width_b1, effective_width_b2, effective_width_b3)
+                    b = min(effective_width_b1, effective_width_b2, effective_width_b3)
 
-            y_t = find_y_t(h, b, b_w, h_f)
-            I_g = find_I_g(b, b_w, h_f, h, y_t)
-            E = find_E_c(fc′)
+                    y_t = find_y_t(each_h, b, each_b_w, each_h_f)
+                    I_g = find_I_g(b, each_b_w, each_h_f, each_h, y_t)
+                    E = find_E_c(fc′)
 
-            # Using basic combination 2 from 2.3.2 of ASCE standard
-            # Using just dead loads first
+                    # Using basic combination 2 from 2.3.2 of ASCE standard
+                    # Using just dead loads first
 
-            total_loads = (1.2 * each_dead_load * 1000) + (1.6 * L * 1000)  ## to change the units from kip to lbs, multiple D and L by 1000
-            #plotting_points[count, :] = [each_length, each_dead_load]
-            max_δ = find_max_δ(total_loads, each_length, E, I_g)
-            #Assuming that this is time dependent
-            λ_Δ = find_λ_Δ(find_ξ(60), find_ρ′(0, b, d))
-            println("λ_Δ is ", λ_Δ)
-            total_deflection = max_δ * λ_Δ
-            #total_deflection = max_δ
-            println("total_deflection is ", total_deflection)
+                    total_loads = (1.2 * dead_load * 1000 / 12) + (1.6 * live_load * 1000 / 12)  ## to change the units from kip to lbs and ft to in, multiple D and L by 1000/12
+                    #plotting_points[count, :] = [each_length, each_dead_load]
+                    max_δ = find_max_δ(total_loads, Beam_Span_Length, E, I_g)
+                    #Assuming that this is time dependent
+                    λ_Δ = find_λ_Δ(find_ξ(60), find_ρ′(0, b, each_d))
+                    #println("λ_Δ is ", λ_Δ)
+                    total_deflection = max_δ * λ_Δ
+                    #total_deflection = max_δ
+                    #println("total_deflection is ", total_deflection)
 
-            deflection_limit = 25.4 * (each_length) / 480 ##bc each length is in in and this equation consider the length to be in mm
-            println("deflection limit is ", deflection_limit)
+                    deflection_limit = 25.4 * (Beam_Span_Length) / 180 ##bc each length is in in and this equation consider the length to be in mm
+                    #println("deflection limit is ", deflection_limit)
 
-            if total_deflection < deflection_limit
-                push!(beam_length_within_limits, each_length)
-                push!(dead_load_within_limits, each_dead_load)
-                push!(values_of_total_deflection_within_limits, total_deflection)
-                println(true)
-            else
-                push!(beam_length_out_of_limits, each_length)
-                push!(dead_load_out_of_limits, each_dead_load)
-                push!(values_of_total_deflection_out_of_limits, total_deflection)
-                println(false)
+                    if total_deflection < deflection_limit
+                        # push!(beam_length_within_limits, each_length)
+                        # push!(dead_load_within_limits, each_dead_load)
+                        push!(b_w_within_limits, each_b_w)
+                        push!(h_f_within_limits, each_h_f)
+                        push!(h_within_limits, each_h)
+                        push!(d_within_limits, each_d)
+                        push!(values_of_total_deflection_within_limits, total_deflection)
+                        #println(true)
+                    else
+                        # push!(beam_length_out_of_limits, each_length)
+                        # push!(dead_load_out_of_limits, each_dead_load)
+                        push!(b_w_out_of_limits, each_b_w)
+                        push!(h_f_out_of_limits, each_h_f)
+                        push!(h_out_of_limits, each_h)
+                        push!(d_out_of_limits, each_d)
+                        push!(values_of_total_deflection_out_of_limits, total_deflection)
+                        #println(false)
+                    end
+                end
             end
         end
     end
     #visualization
-    GLMakie.activate!()
-    # tell julia to use GLMakie
-    f = Figure(resolution=(1200, 800)) #initialize with resolution
-    ax = Axis3(f[1, 1], xlabel="Beam Length [In]", ylabel="Dead Load[Psf]", zlabel="max deflection")
-    #initialize 3d axis with labels
-    scatter!(ax, beam_length_within_limits, dead_load_within_limits, values_of_total_deflection_within_limits, color=values_of_total_deflection_within_limits) #plot all data
-    scatter!(ax, beam_length_out_of_limits, dead_load_out_of_limits, values_of_total_deflection_out_of_limits, color="gray") #plot all data
-    return f
+    # GLMakie.activate!()
+    # # tell julia to use GLMakie
+    # f = Figure(resolution=(1200, 800)) #initialize with resolution
+    # ax = Axis3(f[1, 1], xlabel="h [In]", ylabel="h_f [In]", zlabel="max deflection")
+    # #initialize 3d axis with labels
+    # # scatter!(ax, beam_length_within_limits, dead_load_within_limits, values_of_total_deflection_within_limits, color=values_of_total_deflection_within_limits) #plot all data
+    # # scatter!(ax, beam_length_out_of_limits, dead_load_out_of_limits, values_of_total_deflection_out_of_limits, color="gray") #plot all data
+    # scatter!(ax, h_within_limits, h_f_within_limits, values_of_total_deflection_within_limits, color=values_of_total_deflection_within_limits) #plot all data
+    # scatter!(ax, h_out_of_limits, h_f_out_of_limits, values_of_total_deflection_out_of_limits, color="gray") #plot all data
+
+    # return f
+
+
+    # Create a table of data
+    #total_combinations_within_limits = length(b_w_within_limits) * length(h_f_within_limits) * length(h_within_limits) * length(d_within_limits)
+    #println(total_combinations_within_limits)
+    df = DataFrame(
+        id=1:length(b_w_within_limits),
+        b_w_values=b_w_within_limits,
+        h_f_values=h_f_within_limits,
+        h_values=h_within_limits,
+        d_values=d_within_limits,
+        deflection_values=values_of_total_deflection_within_limits
+    )
+
+    trace = parcoords(;
+        line=attr(color=df.id),
+        dimensions=[
+            attr(range=[0, 40], label="b_w", values=df.b_w_values),
+            attr(range=[0, 40], label="h_f", values=df.h_f_values),
+            attr(range=[0, 40], label="h", values=df.h_values),
+            attr(range=[0, 40], label="d", values=df.d_values),
+            attr(range=[0, 500], label="deflection", values=df.deflection_values)
+        ]
+    )
+    layout = Layout(
+        title_text="Parallel Coordinates Plot",
+        title_x=0.5,
+        title_y=0,
+    )
+
+    df2 = DataFrame(
+        id=1:length(b_w_out_of_limits),
+        b_w_values=b_w_out_of_limits,
+        h_f_values=h_f_out_of_limits,
+        h_values=h_out_of_limits,
+        d_values=d_out_of_limits,
+        deflection_values=values_of_total_deflection_out_of_limits
+    )
+
+    trace2 = parcoords(;
+        line=attr(color="red"),
+        dimensions=[
+            attr(range=[0, 40], label="b_w", values=df2.b_w_values),
+            attr(range=[0, 40], label="h_f", values=df2.h_f_values),
+            attr(range=[0, 40], label="h", values=df2.h_values),
+            attr(range=[0, 40], label="d", values=df2.d_values),
+            attr(range=[0, 500], label="deflection", values=df2.deflection_values)
+        ]
+    )
+    layout2 = Layout(
+        title_text="Parallel Coordinates Plot",
+        title_x=0.5,
+        title_y=0,
+    )
+
+
+    parallel_plot = plot(trace, layout)
+    parallel_plot2 = plot(trace2, layout2)
+    display(parallel_plot2)
+    display(parallel_plot)
 
 
 end

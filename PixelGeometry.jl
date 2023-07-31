@@ -37,15 +37,19 @@ function makepixel(L::Real, t::Real, Lc::Real; n=10)
 end
 function main()
     points = makepixel(150, 10, 10)
-    println(points)
-    negative_points = -1 * (points)
-    new_points = Matrix{Float64}(undef, size(points)[1], 2)
-    #println(new_points)
-    for i in 1:size(points)[1]
-        x = negative_points[i, 1]
-        y = points[i, 2]
-        new_points[i, :] = [x, y]
+    point_matrix= Matrix{Float64}(undef, size(points)[1],2)
+    for row in 1: size(point_matrix)[1]
+        point_matrix[row,:]= points[row]
     end
+    negative_points = -1 * (point_matrix)
+    new_points= Array{Array{Float64,1},1}()
+    for i in 1:size(point_matrix)[1]
+        x = negative_points[i, 1]
+        y = point_matrix[i, 2]
+        push!(new_points, [x,y])
+    end
+    
+
     f1 = Figure(resolution=(600, 600))
     ax1 = Axis(f1[1, 1], aspect=DataAspect(), xlabel="x", ylabel="y")
     poly!(Point2.(points))

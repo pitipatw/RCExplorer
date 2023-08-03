@@ -60,7 +60,7 @@ function main()
     # using rotation matrix
     θ = 120.0
     # rotation_matrix = [[cosd(θ), (-1*sind(θ))] [sind(θ) ,cosd(θ)]]
-    rotation_matrix = [[cosd(θ) sind(θ)], [-sind(θ), cosd(θ)]]
+    rotation_matrix = [cosd(θ) -sind(θ) ; sind(θ) cosd(θ)]
     new_points3 = Array{Array{Float64,1},1}()
     # println(point_matrix)
     # println(point_matrix[3, :])
@@ -71,9 +71,9 @@ function main()
     #     println(x)
     #     println(y)
     for row in 1:size(point_matrix)[1]
-        rotated_points = rotation_matrix .* point_matrix[row, :]
-        x = sum(rotated_points[2])
-        y = sum(rotated_points[1])
+        rotated_points = rotation_matrix * point_matrix[row, :]
+        x = rotated_points[1]
+        y = rotated_points[2]
         push!(new_points3, [x, y])
     end
     println(new_points3)
@@ -117,6 +117,7 @@ function main()
     ax1 = Axis(f1[1, 1], aspect=DataAspect(), xlabel="x", ylabel="y")
     poly!(Point2.(points))
     poly!(Point2.(new_points))
+    # println(new_points2)
     poly!(Point2.(new_points3))
     return f1
 end

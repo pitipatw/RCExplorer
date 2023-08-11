@@ -1,9 +1,10 @@
-module PostTen
+# module PostTen
 
 using Dates
 
 include("pixelgeo.jl") #generating Pixel geometries
 include("sectionproperties.jl")
+include("calstr.jl") #calculating strength
 
 
 
@@ -58,31 +59,52 @@ ac = 400.0 #total cross section area of the section
 
 
 #constant parameters
-fpe
+Ep = 200_000
 
 #loops
-     range_fc′ = 28:7:56
-     range_as = [99.0 , 140.0]
-     range_ec = 0.5:0.1:ec_max
-     range_fpe = (0.1:0.1:0.7) * 1860.0
-#we will loop through these three parameters and get the results.
+#full
+
+function test1()
+    #  range_fc′ = 28:7:56
+    #  range_as = [99.0 , 140.0]
+    #  range_ec = 0.5:0.1:ec_max
+    #  range_fpe = (0.1:0.1:0.7) * 1860.0
+#test
+range_fc′ = 28
+range_as = 99.0
+range_ec = 0.5
+range_fpe = 186.0
+
+
+total_s = length(range_fc′) * length(range_as) * length(range_ec) * length(range_fpe)
+results = Matrix{Float64}(undef,4, total_s)
+     #we will loop through these three parameters and get the results.
 # with constant cross section properties.
-for fc′ in eachindex(range_fc′)
-    for as in eachindex(range_as)
-        for ec in eachindex(range_ec)
-            for fpe in eachindex(range_fpe)
+for idx_fc′ in eachindex(range_fc′)
+    for idx_as in eachindex(range_as)
+        for idx_ec in eachindex(range_ec)
+            for idx_fpe in eachindex(range_fpe)
+                global fc′ = range_fc′[idx_fc′]
+                global as = range_as[idx_as]
+                global ec = range_ec[idx_ec]
+                global fpe = range_fpe[idx_fpe]
 
 
+                pu, mu, vu, valid = calstr()
+                idx = map(idx_fc′ , idx_as, idx_ec, idx_fpe)
+
+
+            end
         end
     end
 end
-
+end
 #Calculation starts here.
 
     #Pure Compression Capacity
     ccn = 0.85 * fc′ * ac
     #need a justification on 0.003 Ep
-    pn = (ccn - (fpe - 0.003 * Ep) * aps) / 1000 #[kN]
+    pn = (ccn - (fpe - 0.003 * Ep) * as) / 1000 #[kN]
     pu = 0.65 * 0.8 * pn #[kN]
     ptforce = pu #[kN]
     # @printf "The pure compression capacity is %.3f [kN]\n" pu
@@ -91,14 +113,14 @@ end
     #Pure Moment Capacity
 
     #From ACI318M-19 Table: 20.3.2.4.1
-    ρ = aps / ac #reinforcement ratio (Asteel/Aconcrete)
+    ρ = as / ac #reinforcement ratio (Asteel/Aconcrete)
     fps1 = fpe + 70 + fc′ / (100 * ρ) #
     fps2 = fpe + 420
     fps3 = 1300.0 #Yield str of steel from ASTM A421
     fps = minimum([fps1, fps2, fps3])
 
     #concrete compression area balanced with steel tension force.
-    acomp = aps * fps / (0.85 * fc′)
+    acomp = as * fps / (0.85 * fc′)
     #get the depth of the compression area, in the form of y coordinate.
     depth, chk = getdepth(pixelpts, acomp, [ytop, ybot])
 
@@ -110,7 +132,7 @@ end
     ~, cgcomp = secprop(ptscomp, 0.0)
     #moment arm of the section is the distance between the centroid of the compression area and the steel.
     arm = cgcomp - steelpos
-    mn_steel = aps * fps * arm / 1e6 #[kNm]
+    mn_steel = as * fps * arm / 1e6 #[kNm]
 
     #Recheck with concrete.
     #check compression strain, make sure it's not more than 0.003
@@ -135,7 +157,7 @@ end
     #Shear Calculation
     ashear = ac * shear_ratio
     fctk = ftension
-    ρs = aps / ashear
+    ρs = as / ashear
     k = clamp(sqrt(200.0 / d), 0, 2.0)
     fFts = 0.45 * fR1
     wu = 1.5

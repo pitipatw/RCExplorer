@@ -1,0 +1,157 @@
+module PostTen
+
+using Dates
+
+include("pixelgeo.jl") #generating Pixel geometries
+include("sectionproperties.jl")
+
+
+
+
+
+#HTTP connection
+function initialize()
+    server = WebSockets.listen!("127.0.0.1", 2000) do ws
+        for msg in ws
+            println("Hello World")
+            today = Dates.today()
+            filename = "inputs_"*today*".json"
+            open(joinpath(@__DIR__, filename), "w") do f
+                write(f, msg)
+            end
+            println("inputs_"*today*".json written succesfully")
+        end
+    end
+    return filename
+end
+
+function close()
+    WebSockets.close(server)
+end
+#close(server)
+ 
+
+end
+
+#get the data
+filename = PostTen.initialize()
+
+file = open(joinpath(@__DIR__,filename) )
+data = JSON.parse(file)
+#data is a dictionary with keys
+section : {L , t, Lc}
+ec_max
+demands : {Mu, Vu, Pu}
+
+###
+#a function that input L, t,Lc and get area, inertia and cg out.
+
+#save the csv file.
+
+#from now on, read the file.
+
+CSVfilename = "pixel_$L_$t_$Lc.csv"
+# a function that read and interpolate points between files.
+
+#calculation results 
+ac = 400.0 #total cross section area of the section
+
+
+#constant parameters
+fpe
+
+#loops
+     range_fc′ = 28:7:56
+     range_as = [99.0 , 140.0]
+     range_ec = 0.5:0.1:ec_max
+     range_fpe = (0.1:0.1:0.7) * 1860.0
+#we will loop through these three parameters and get the results.
+# with constant cross section properties.
+for fc′ in eachindex(range_fc′)
+    for as in eachindex(range_as)
+        for ec in eachindex(range_ec)
+            for fpe in eachindex(range_fpe)
+
+
+        end
+    end
+end
+
+#Calculation starts here.
+
+    #Pure Compression Capacity
+    ccn = 0.85 * fc′ * ac
+    #need a justification on 0.003 Ep
+    pn = (ccn - (fpe - 0.003 * Ep) * aps) / 1000 #[kN]
+    pu = 0.65 * 0.8 * pn #[kN]
+    ptforce = pu #[kN]
+    # @printf "The pure compression capacity is %.3f [kN]\n" pu
+    # println("#"^50)
+
+    #Pure Moment Capacity
+
+    #From ACI318M-19 Table: 20.3.2.4.1
+    ρ = aps / ac #reinforcement ratio (Asteel/Aconcrete)
+    fps1 = fpe + 70 + fc′ / (100 * ρ) #
+    fps2 = fpe + 420
+    fps3 = 1300.0 #Yield str of steel from ASTM A421
+    fps = minimum([fps1, fps2, fps3])
+
+    #concrete compression area balanced with steel tension force.
+    acomp = aps * fps / (0.85 * fc′)
+    #get the depth of the compression area, in the form of y coordinate.
+    depth, chk = getdepth(pixelpts, acomp, [ytop, ybot])
+
+    #set of points that represent the compression area.
+    ptscomp = pixelpts[chk, :]
+
+    #calculate the moment arm.
+    #get cgy of the compression area.
+    ~, cgcomp = secprop(ptscomp, 0.0)
+    #moment arm of the section is the distance between the centroid of the compression area and the steel.
+    arm = cgcomp - steelpos
+    mn_steel = aps * fps * arm / 1e6 #[kNm]
+
+    #Recheck with concrete.
+    #check compression strain, make sure it's not more than 0.003
+    c = depth
+    ϵs = fps / Ep
+    ϵc = c * ϵs / (ds - c)
+
+    if ϵc > 0.003
+        println("Compression strain is more than 0.003")
+        println("Please rework with the section")
+    end
+
+
+    mu = Φ(ϵs) * mn_steel #[kNmm]
+
+    # @printf "The pure moment capacity is %.3f [kNm]\n" mu
+    # println("#"^50)
+
+
+
+
+    #Shear Calculation
+    ashear = ac * shear_ratio
+    fctk = ftension
+    ρs = aps / ashear
+    k = clamp(sqrt(200.0 / d), 0, 2.0)
+    fFts = 0.45 * fR1
+    wu = 1.5
+    CMOD3 = 1.5
+    ned = ptforce# can be different
+    σcp1 = ned / ac
+    σcp2 = 0.2 * fc′
+    σcp = clamp(σcp1, 0.0, σcp2)
+    fFtu = get_fFtu(fFts, wu, CMOD3, fR1, fR3)
+    vn = ashear * get_v(ρs, fc′, fctk, fFtu, 1.0, σcp1, k)#kN
+    vu = 0.75 * vn
+
+    # println("#"^50)
+    # @printf "The shear capacity is %.3f [kN]\n" vu
+
+
+
+
+

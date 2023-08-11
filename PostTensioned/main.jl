@@ -23,6 +23,7 @@ using Printf
 
 
 include("pixelgeo.jl")
+include("sectionproperties.jl")
 include("ptFunc.jl")
 
 

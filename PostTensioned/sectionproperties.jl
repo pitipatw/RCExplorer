@@ -40,6 +40,7 @@ end
 
 """
 Get the depth of the section given eval points and target area
+This is for the full points evaluation
 """
 function getdepth(p_inpoly::Matrix{Float64}, target_a::Float64, ys::Vector{Float64}; tol::Float64 = 0.1, dx = 1.0, dy = 1.0)
     y_top = ys[1]
@@ -62,6 +63,7 @@ function getdepth(p_inpoly::Matrix{Float64}, target_a::Float64, ys::Vector{Float
         c_pos = y_top - depth
         ys = p_inpoly[:, 2]
         chk = ys .> c_pos
+        
         com_pts = p_inpoly[chk, :]
         area = dx * dy * size(com_pts)[1]
         diff = abs(area - target_a) / target_a

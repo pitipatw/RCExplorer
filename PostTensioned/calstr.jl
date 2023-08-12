@@ -1,3 +1,5 @@
+using Printf
+
 function calstr()
     #Pure Compression Capacity
     ccn = 0.85 * fc′ * ac

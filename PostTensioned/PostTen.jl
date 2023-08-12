@@ -32,7 +32,6 @@ end
 #close(server)
  
 
-end
 
 #get the data
 filename = PostTen.initialize()
@@ -63,7 +62,10 @@ Ep = 200_000
 
 #loops
 #full
-
+"""
+dx = dy = 0.25
+n for pixel = 10
+"""
 function test1()
     #  range_fc′ = 28:7:56
     #  range_as = [99.0 , 140.0]

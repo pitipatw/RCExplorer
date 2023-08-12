@@ -48,7 +48,7 @@ function makepixel(L::Real, t::Real, Lc::Real; n = 100)
     return points, p5, r
 end
 
-function fullpixel(L::Real, t::Real, Lc::Real; n = 100)
+function fullpixel(L::Real, t::Real, Lc::Real; n = 10)
     g1 = makepixel(L, t, Lc, n = n) ; 
     ptx1 = [i[1] for i in g1[1]]
     pty1 = [i[2] for i in g1[1]]
@@ -101,7 +101,7 @@ end
 
 #Will have to make a half pixel here.
 
-function halfpixel(L::Real, t::Real, Lc::Real; n = 100)
+function halfpixel(L::Real, t::Real, Lc::Real; n = 10)
     println("Hang in there. I'm working on it.")
 end
 
@@ -118,6 +118,7 @@ function vecvec_to_matrix(vecvec)
 end
 
 function fillpoints(nodes::Matrix{Float64}, dx::Real, dy::Real)
+
     #get bounding box
     xmin = minimum(nodes[:,1])
     xmax = maximum(nodes[:,1])
@@ -131,8 +132,11 @@ function fillpoints(nodes::Matrix{Float64}, dx::Real, dy::Real)
     grid(ranges::NTuple{N, <: AbstractRange}) where N = GeometryTypes.Point.(Iterators.product(ranges...))
     points = grid((x,y))
 
-    points = vec(collect.(points))
+    # @time points = vec(collect.(points))
+    points = vec(points)
+
     points = vecvec_to_matrix(points)
+
     return points
 end
 
@@ -147,7 +151,12 @@ function pointsinpixel(nodes::Matrix{Float64}, points::Matrix{Float64})
     #check for nodes in the edge
 
     tol = 1e-1
+
     stat = inpoly2(points, nodes, edges, atol =tol)
+
+    # poly = Polygon(nodes...)
+
+
 
     return stat[:,1]
 end

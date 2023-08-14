@@ -1,5 +1,6 @@
 # module PostTen
-
+using JSON
+using HTTP
 using Dates
 
 include("pixelgeo.jl") #generating Pixel geometries
@@ -11,24 +12,59 @@ include("calstr.jl") #calculating strength
 
 
 #HTTP connection
-function initialize()
-    server = WebSockets.listen!("127.0.0.1", 2000) do ws
-        for msg in ws
-            println("Hello World")
-            today = Dates.today()
-            filename = "inputs_"*today*".json"
-            open(joinpath(@__DIR__, filename), "w") do f
-                write(f, msg)
+function main()
+    #initialize the server
+    try
+        server = WebSockets.listen!("127.0.0.1", 2000) do ws
+            for msg in ws
+                println("Hello World")
+                today = string(Dates.today())
+                today = replace(today, "-" => "_")
+                filename = today*".json"
+        
+
+                
+                open(joinpath(@__DIR__, "input_"*filename), "w") do f
+                    write(f, msg)
+                end
+                println("input_"*filename*" written succesfully")
+            
+                #work here
+
+
+
+
+
+
+                #output
+                #Dummies
+                fc′ = 28.0
+                as = 99.0
+                ec = 0.5
+                fpe = 186.0
+                outr = Dict("fc_prime" => fc′, "as" => as, "ec" => ec, "fpe" => fpe)
+                jsonfile = JSON.json(outr)
+                HTTP.send(ws,jsonfile)
+                open(joinpath(@__DIR__,"output_"*filename), "w") do f
+                    write(f, jsonfile)
+                    println("output_"*filename*" written succesfully")
+
+                end
             end
-            println("inputs_"*today*".json written succesfully")
         end
+    catch 
+        println("Error")
+        println("Closing the server")
+        WebSockets.close(server)
+        return server
     end
-    return filename
 end
 
-function close()
-    WebSockets.close(server)
-end
+
+server = main()
+close(server)
+
+
 #close(server)
  
 

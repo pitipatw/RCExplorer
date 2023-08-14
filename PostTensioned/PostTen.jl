@@ -14,35 +14,49 @@ include("calstr.jl") #calculating strength
 #HTTP connection
 function main()
     #initialize the server
-    try
+    # try
         server = WebSockets.listen!("127.0.0.1", 2000) do ws
             for msg in ws
                 println("Hello World")
                 today = string(Dates.today())
                 today = replace(today, "-" => "_")
                 filename = today*".json"
-        
+                data = JSON.parse(msg, dicttype=Dict{String,Float64})
 
-                
                 open(joinpath(@__DIR__, "input_"*filename), "w") do f
                     write(f, msg)
                 end
                 println("input_"*filename*" written succesfully")
             
                 #work here
+                Pu = data["Pu"]
+                Mu = data["Mu"]
+                Vu = data["Vu"]
+                L = data["L"]
+                t = data["t"]
+                Lc = data["Lc"]
+
+                
 
 
 
-
-
+        
+                
 
                 #output
                 #Dummies
-                fc′ = 28.0
-                as = 99.0
-                ec = 0.5
-                fpe = 186.0
-                outr = Dict("fc_prime" => fc′, "as" => as, "ec" => ec, "fpe" => fpe)
+                fc′ = [28.0, 28.0, 35.5, 58.0]
+                as = [99.0, 140.0, 99.0, 140.0]
+                ec = [0.5, 0.65, 0.90, 0.77 ]
+                fpe = [186.0, 200.0, 354.0, 400.0]
+                
+                n = length(fc′)
+                outr = Vector{Dict{String,Float64}}(undef, n)
+                for i = 1:n
+                    outr[i] = Dict("fc_prime" => fc′[i], "as" => as[i], "ec" => ec[i], "fpe" => fpe[i])
+                end    
+                
+      
                 jsonfile = JSON.json(outr)
                 HTTP.send(ws,jsonfile)
                 open(joinpath(@__DIR__,"output_"*filename), "w") do f
@@ -52,12 +66,12 @@ function main()
                 end
             end
         end
-    catch 
-        println("Error")
-        println("Closing the server")
-        WebSockets.close(server)
-        return server
-    end
+    # catch 
+    #     println("Error")
+    #     println("Closing the server")
+    #     WebSockets.close(server)
+    #     return server
+    # end
 end
 
 

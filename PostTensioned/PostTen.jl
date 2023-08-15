@@ -10,9 +10,9 @@ include("calstr.jl") #calculating strength
 
 
 
-
+cin = getterrrain() 
 #HTTP connection
-function main()
+function main(cin)
     #initialize the server
     # try
         server = WebSockets.listen!("127.0.0.1", 2000) do ws
@@ -27,36 +27,40 @@ function main()
                     write(f, msg)
                 end
                 println("input_"*filename*" written succesfully")
-            
-                #work here
-                Pu = data["Pu"]
-                Mu = data["Mu"]
-                Vu = data["Vu"]
-                L = data["L"]
-                t = data["t"]
-                Lc = data["Lc"]
-
                 
+                #load the data terrain
+
+                #goes in a loop
+                ns = length(data)
+                ne = 20 #somehow get the number of elements
+                nt = 4 #number of available choices
+                # nt = size(calc)[1]
+                outr = Vector{Matrix{Float64}}(undef, ns)
+                # for si = 1:ns
+                for i = 1:ns
+                    #calculate the capacity in each section
+                    pu = 220.0
+                    mu = 35.0
+                    vu = 10.0
+                    ec_max = 0.7
+
+                    pu = data[i]["pu"]
+                    mu = data[i]["mu"]
+                    vu = data[i]["vu"]
+                    ec_max = data[i]["ec_max"]
 
 
+                    
+                    c1 = cin[:,5:7] .> repeat([pu, mu, vu], nt)'
+                    c2 = cin[:,8] .< repeat(ec_max, nt)
+                    cout = c1 .&& c2
 
-        
-                
+                    # outi = cin[cout,:]
+                    push!( outr, cin[cout,:])
+                   
 
-                #output
-                #Dummies
-                fc′ = [28.0, 28.0, 35.5, 58.0]
-                as = [99.0, 140.0, 99.0, 140.0]
-                ec = [0.5, 0.65, 0.90, 0.77 ]
-                fpe = [186.0, 200.0, 354.0, 400.0]
-                
-                n = length(fc′)
-                outr = Vector{Dict{String,Float64}}(undef, n)
-                for i = 1:n
-                    outr[i] = Dict("fc_prime" => fc′[i], "as" => as[i], "ec" => ec[i], "fpe" => fpe[i])
-                end    
-                
-      
+                end
+
                 jsonfile = JSON.json(outr)
                 HTTP.send(ws,jsonfile)
                 open(joinpath(@__DIR__,"output_"*filename), "w") do f

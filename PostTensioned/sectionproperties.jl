@@ -1,6 +1,7 @@
-using CSV, DataFrames
+using CSV
 using Interpolations
 
+include("pixelgeo.jl")
 """
 Get inertia and cg of the given section
 inputs:
@@ -41,13 +42,10 @@ function secprop(eval_pts::Matrix{Float64} , c::Float64; dx = 1.0, dy = 1.0)
 end
 
 """
-Get the depth of the section given eval points and target area
+Get the depth and centroid of the section given eval points and target area
 This is for the full points evaluation
 """
-function getdepth(target_a::Float64 ; 
-    tol::Float64 = 0.1, 
-    dx = 1.0, 
-    dy = 1.0,
+function getprop(target_a::Float64 ; 
     test = false,
     L = 200.0,
     t = 20.0,
@@ -60,7 +58,7 @@ function getdepth(target_a::Float64 ;
         filename = "dummy.csv"
         fullpath = joinpath(@__DIR__, "sections", filename)
     else
-        filename = "pixel_$L_$t_$Lc.csv"
+        filename = "pixel-$L-$t-$Lc.csv"
         fullpath = joinpath(@__DIR__, "sections", filename)
     end
 
@@ -68,16 +66,19 @@ function getdepth(target_a::Float64 ;
         data = Matrix(CSV.read(fullpath, header=false, DataFrame))
     else 
         println("File not found, creating a new one...")
-        # data = fullpixel(L, t, Lc)
+
+        pts = fullpixel(L, t, Lc)
         # CSV.write(fullpath, data)
     end
-    println(data[:,1])
 
+    A = interpolate(data[:,2], data[:,1])
+    cgy = linear_interpolation(data[:,2], data[:,3])
     # I = linear_interpolation(data[:,1], data[:,3])
 
     depth = A(target_a)
-    
-    return depth
+    cgcomp = cgy(depth)
+
+    return depth , cgcomp
 end
 
 getdepth(43.0, test=true)

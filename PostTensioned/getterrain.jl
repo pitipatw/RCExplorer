@@ -109,7 +109,9 @@ function calcap(fc′, as, ec, fpe;
     acomp = as * fps / (0.85 * fc′)
     steelpos = ec*L
 
-    depth = getdepth(acomp)
+    depth, cgcomp = getprop(acomp)
+
+
 
 """
     #get the depth of the compression area, in the form of y coordinate.
@@ -123,8 +125,7 @@ function calcap(fc′, as, ec, fpe;
     ~, cgcomp = secprop(ptscomp, 0.0)
     
 """
-    cgcomp = 20
-    depth = 20
+
     #moment arm of the section is the distance between the centroid of the compression area and the steel.
     arm = cgcomp - steelpos
     mn_steel = as * fps * arm / 1e6 #[kNm]

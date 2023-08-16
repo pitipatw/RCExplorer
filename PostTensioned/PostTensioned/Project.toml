@@ -1,5 +1,11 @@
 [deps]
 CSV = "336ed68f-0bac-5ca0-87d4-7b16caf5d00b"
 DelimitedFiles = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
+GeometryTypes = "4d00f742-c7ba-57c2-abde-4428a4b178cb"
 HTTP = "cd3eb016-35fb-5094-929b-558a96fad6f3"
 Interpolations = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+PolygonInbounds = "e4521ec6-8c1d-418e-9da2-b3bc4ae105d6"
+StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"

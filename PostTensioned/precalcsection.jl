@@ -19,7 +19,7 @@ total_area = 0.5*0.5*length(pixelpts[:,1])
 dx = 0.5
 dy = 0.5
 tol = 1e-3
-target_a = 15000.0
+target_a = area1
 y_top = maximum(nodes[:,2])
 y_bot = minimum(nodes[:,2])
 ub = y_top - y_bot
@@ -78,18 +78,34 @@ depth = (lb + ub) / 2 #initializing a variable
 counter = 0
 global  ys = pixelpts[:, 2]
 ys_single = unique(ys)
-out = Matrix{Float64}(undef ,length(ys_single),2)
+out = Matrix{Float64}(undef ,length(ys_single),3)
 for i in eachindex(ys_single)
     yi = ys_single[i]
     # c_pos = y_top - depth
     chk = ys .> yi
     com_pts = pixelpts[chk, :]
+    ydx = ys[chk].*(dx*dy)
+    
     area = dx * dy * size(com_pts)[1]
-    out[i,:] = [yi, area]
+    cg = sum(ydx)/area
+    out[i,:] = [yi, area, cg]
 
 end
 
 CSV.write("pixel-$L-$t-$Lc.csv", DataFrame(out ,:auto), header = false)
+data = CSV.read("pixel-$L-$t-$Lc.csv", header = false, DataFrame)
+
+
+ycomp = data[300,1]
+cg = data[300,3]
+area1 = data[300,2]
+
+#plotting
+p2 = scatter!(ax1,0, cg, color = :green, markersize = 10)
+f1
+
+
+
 
 function secprop(eval_pts::Matrix{Float64} , c::Float64; dx = 1.0, dy = 1.0)
     #find moment of inertia of the point related to an axis y = c

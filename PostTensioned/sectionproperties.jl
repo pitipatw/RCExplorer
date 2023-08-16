@@ -47,9 +47,9 @@ This is for the full points evaluation
 """
 function getprop(target_a::Float64 ; 
     test = false,
-    L = 200.0,
-    t = 20.0,
-    Lc = 10.0,
+    L = L,
+    t = t,
+    Lc = Lc,
     )
 
     # check file in "sections" folder for a file name
@@ -66,9 +66,42 @@ function getprop(target_a::Float64 ;
         data = Matrix(CSV.read(fullpath, header=false, DataFrame))
     else 
         println("File not found, creating a new one...")
+        dx = 0.5
+        dy = 0.5
+        nodes = fullpixel(L, t, Lc)
+        pts = fillpoints(nodes, dx,dy)
+        pixelpts = pts[pointsinpixel(nodes,pts),:]
+        total_area = dx*dy*length(pixelpts[:,1])
 
-        pts = fullpixel(L, t, Lc)
+y_top = maximum(nodes[:,2])
+y_bot = minimum(nodes[:,2])
+ub = y_top - y_bot
+lb = 0.0
+depth = (lb + ub) / 2 #initializing a variable
+counter = 0
+global  ys = pixelpts[:, 2]
+ys_single = unique(ys)
+out = Matrix{Float64}(undef ,length(ys_single),3)
+for i in eachindex(ys_single)
+    yi = ys_single[i]
+    # c_pos = y_top - depth
+    chk = ys .> yi
+    com_pts = pixelpts[chk, :]
+    ydx = ys[chk].*(dx*dy)
+    
+    area = dx * dy * size(com_pts)[1]
+    cg = sum(ydx)/area
+    out[i,:] = [yi, area, cg]
+
+end
+
+CSV.write("pixel-$L-$t-$Lc.csv", DataFrame(out ,:auto), header = false)
+data = CSV.read("pixel-$L-$t-$Lc.csv", header = false, DataFrame)
+
+
         # CSV.write(fullpath, data)
+
+
     end
 
     A = interpolate(data[:,2], data[:,1])

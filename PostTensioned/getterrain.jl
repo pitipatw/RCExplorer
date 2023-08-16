@@ -109,7 +109,7 @@ function calcap(fc′, as, ec, fpe;
     acomp = as * fps / (0.85 * fc′)
     steelpos = ec*L
 
-    depth, chk = getdepth(pixelpts, acomp, [ytop, ybot])
+    depth = getdepth(acomp)
 
 """
     #get the depth of the compression area, in the form of y coordinate.

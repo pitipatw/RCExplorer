@@ -48,48 +48,36 @@ function getdepth(target_a::Float64 ;
     tol::Float64 = 0.1, 
     dx = 1.0, 
     dy = 1.0,
-    test = false)
-    # L = 200.0,
-    # t = 20.0,
-    # Lc = 10.0,
+    test = false,
+    L = 200.0,
+    t = 20.0,
+    Lc = 10.0,
     )
 
     # check file in "sections" folder for a file name
     # "pixel_$L_$t_$Lc.csv"
-
-    filename = "pixel_"*string(L)*"_"*string(t)*"_"*string(Lc)*".csv"
-    filename = "dummy.csv"
-    fullpath = joinpath(@__DIR__, "sections", filename)
-    if isfile(fullpath) 
-        data = CSV.read(fullpath, header=true)
-    else 
-        println("File not found, creating a new one...")
-        # data = fullpixel(L, t, Lc)
-        # CSV.write(fullpath, data)
-    end
-
-    #now we match.
-
     if test
-    filename = "dummy.csv"
+        filename = "dummy.csv"
+        fullpath = joinpath(@__DIR__, "sections", filename)
     else
-    fullpath = joinpath(@__DIR__, "sections", filename)
+        filename = "pixel_$L_$t_$Lc.csv"
+        fullpath = joinpath(@__DIR__, "sections", filename)
     end
-    
+
     if isfile(fullpath) 
-        data = Matrix(CSV.read(fullpath, header=true, DataFrame))
+        data = Matrix(CSV.read(fullpath, header=false, DataFrame))
     else 
         println("File not found, creating a new one...")
         # data = fullpixel(L, t, Lc)
         # CSV.write(fullpath, data)
     end
-    
-    A = linear_interpolation(data[:,2], data[:,1])
+    println(data[:,1])
+
     # I = linear_interpolation(data[:,1], data[:,3])
-    
-    
-    atarget = 124.0
-    depth = A(atarget)
+
+    depth = A(target_a)
     
     return depth
 end
+
+getdepth(43.0, test=true)

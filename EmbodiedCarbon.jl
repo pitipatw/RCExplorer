@@ -45,7 +45,7 @@ function find_a(A_s, f_y, fc′, b)
     return (A_s * f_y) / (0.85 * fc′ * b)
 end
 
-
+### Clean this up!!!
 
 """
 input the calculated A_s value and match it with discrete rebar combinations
@@ -184,14 +184,95 @@ function CalculateEmbodiedCarbon(b, h, length)
     return EmbodiedCarbon
 end
 
-
 ## meeting update
 # geometry will be fixed, input the steel position and steel size range
+# this equation is derived from example 5-4 in RC textbook
 function find_fc′(A_s::Float64, f_y::Float64, d::Float64, b::Float64, j::Float64)
     fc′ = (A_s * f_y) / (-2 * 0.85 * d * b * (j - 1))
     return fc′
 end
 
+"""
+Calculating the Maximum Deflection of simply supported, uniform Distribued load
+which is at x= L/2
+"""
+function find_max_δ(w, L, E, I)
+    return (5 * w * L^4) / (384 * E * I)
+end
+
+"""
+Find the gross Inertia for a rectanglular section
+Table 8-2 from EB070-07.pdf 
+or Section 5, page 190 of RC Mechanics and Design 6th textbook
+"""
+function find_I_g(b, h)
+    return (b * h^3) / 12
+end
+
+"""
+Find the gross Inertia for a T section
+"""
+function find_I_g(b, b_w, h_f, h, y_t)
+    return ((b - b_w) * h_f^3) / 12 + (b_w * h^3) / 12 + (b - b_w) * h_f * ((h - h_f) / (2 - y_t))^2 + (b_w * h * (y_t - (h / 2))^2)
+end
+
+"""
+Find y_t(Distance from centroidal axis of gross section, neglecting reinforcement, to tension face)
+Used in finding the gross Inertia for a T section
+"""
+function find_y_t(h, b, b_w, h_f)
+    return h - (1 / 2) * ((b - b_w) * h_f^2 + (b_w * h^2)) / ((b - b_w) * h_f + (b_w * h))
+end
+
+"""
+Modulus of elasticity for w_c(unitweight) between 1440 and 2560 kg/m^3
+ACI 19.2.2.1
+"""
+function find_E_c(; w_c, fc′)
+    return (w_c)^1.5 * 0.043 * sqrt(fc′) # in MPa
+end
+
+"""
+Modulus of elasticity for normalweight concrete
+ACI 19.2.2.1
+"""
+function find_E_c(fc′::Float64)
+    return 4700.0 * sqrt(fc′) # in psi
+end
+
+"""
+Ratio of A_s′(Area of compressive reinforcement) to bd
+Calculate at midspan for simple and continuous spans and at the support for cantilevers 
+ACI 24.2.4.1.2
+"""
+function find_ρ′(A_s′, b, d)
+    return A_s′ / (b * d)
+end
+
+"""
+Find time-dependent factor for sustained load
+ACI Table 24.2.4.1.3
+"""
+function find_ξ(sustained_load_duration_in_months::Int64)
+    if sustained_load_duration_in_months == 3
+        return 1.0
+    elseif sustained_load_duration_in_months == 6
+        return 1.2
+    elseif sustained_load_duration_in_months == 12
+        return 1.4
+    elseif sustained_load_duration_in_months >= 60
+        return 2.0
+    else
+        return "Round to 3,6,12, 60 or more months"
+    end
+end
+
+"""
+Multiplier used for additional deflection due to long-term effects
+"""
+function find_λ_Δ(ξ, ρ′)
+    return ξ / (1 + (50 * ρ′))
+end
 
 function main()
     ## Define initial value
@@ -204,19 +285,40 @@ function main()
     # 4.Reinforcement bars area (let’s assume same area for all bars, using the discrete bar sizes you already have in your script)
     # 5.Beam length (l)(This is crucial for serviceability analysis and weight comparison)
 
-    b = 5.0
-    h = 5.0
-    d = h - 0.05
-    j = rand(Uniform(0, 5), 20, 1)
+    # Define All Initial Values
+    b = 5.0 #in
+    b_w = 12.0 #in
+    h_f = 12.0 #in
+    h = 5.0 #in    
+    d = h - 0.05 #in
+    j = rand(Uniform(0, 5), 20, 1) # no unit
     f_y = 60000.0 #psi
     ϕ = 0.9 #no unit
-    l = 10
+    l = 10 # beam length in inch
     M_u = rand(Uniform(100000, 200000), 10, 1) #ft
+    spacing_between_beams = 12.0 #ft
+    dead_load = 2.5 #k/ft
+    live_load = 1.5 #k/ft # kip/ square feet # kip= 1000 pound force
 
-    all_j_list = Array{Float64,1}()
-    all_M_u_list = Array{Float64,1}()
-    all_fc′_list = Array{Float64,1}()
-    all_A_s_list = Array{Float64,1}()
+    # Creating the storage place for the variables
+    j_within_limits = Array{Float64,1}()
+    j_out_of_limits = Array{Float64,1}()
+    M_u_within_limits = Array{Float64,1}()
+    M_u_out_of_limits = Array{Float64,1}()
+    A_s_within_limits = Array{Float64,1}()
+    A_s_out_of_limits = Array{Float64,1}()
+    fc′_within_limits = Array{Float64,1}()
+    fc′_out_of_limits = Array{Float64,1}()
+    values_of_total_deflection_within_limits = Array{Float64,1}()
+    values_of_total_deflection_out_of_limits = Array{Float64,1}()
+    j_when_fc′_is_negative = Array{Float64,1}()
+    M_u_when_fc′_is_negative = Array{Float64,1}()
+    A_s_when_fc′_is_negative = Array{Float64,1}()
+    negative_fc′ = Array{Float64,1}()
+
+    # With varying j and M_u, get multiples A_s and for each A_s, compare it with the combination of bar we have
+    # and output all the A_s greater than or equal to the input A_s
+    # lastly, find fc′ for each A_s and store all the variables
     for each_j in j
         for each_M_u in M_u
             A_s = find_A_s(M_u=convert_ft_to_in(each_M_u),
@@ -224,43 +326,61 @@ function main()
             available_A_s = give_all_possible_A_s_rebar_combination(A_s)
             for each_A_s in available_A_s
                 fc′ = find_fc′(each_A_s, f_y, d, b, each_j)
-                push!(all_A_s_list, each_A_s)
-                push!(all_j_list, each_j)
-                push!(all_M_u_list, each_M_u)
-                push!(all_fc′_list, fc′)
+
+                if fc′ > 0
+                    ## Serviceability
+                    y_t = find_y_t(h, b, b_w, h_f)
+                    I_g = find_I_g(b, b_w, h_f, h, y_t)
+                    E = find_E_c(fc′)
+
+                    # Using basic combination 2 from 2.3.2 of ASCE standard
+                    # Using just dead loads first
+
+                    total_loads = (1.2 * dead_load * 1000 / 12) + (1.6 * live_load * 1000 / 12)  ## to change the units from kip to lbs and ft to in, multiple D and L by 1000/12
+                    max_δ = find_max_δ(total_loads, l, E, I_g)
+                    #Assuming that this is time dependent
+                    λ_Δ = find_λ_Δ(find_ξ(60), find_ρ′(0, b, d))
+
+                    total_deflection = max_δ * λ_Δ
+                    #total_deflection = max_δ
+
+                    deflection_limit = 25.4 * (l) / 180 ##bc each length is in in and this equation consider the length to be in mm
+                    if total_deflection < deflection_limit
+                        push!(fc′_within_limits, fc′)
+                        push!(A_s_within_limits, each_A_s)
+                        push!(j_within_limits, each_j)
+                        push!(M_u_within_limits, each_M_u)
+                        push!(values_of_total_deflection_within_limits, total_deflection)
+                    else
+                        println(false)
+                        push!(fc′_out_of_limits, fc′)
+                        push!(A_s_out_of_limits, each_A_s)
+                        push!(j_out_of_limits, each_j)
+                        push!(M_u_out_of_limits, each_M_u)
+                        push!(values_of_total_deflection_out_of_limits, total_deflection)
+                    end
+                elseif fc′ < 0
+                    push!(j_when_fc′_is_negative, each_j)
+                    push!(M_u_when_fc′_is_negative, each_M_u)
+                    push!(A_s_when_fc′_is_negative, each_A_s)
+                    push!(negative_fc′, fc′)
+                end
             end
         end
     end
-    # value_to_plot = Matrix{Float64}(undef, length(A_s), 2)
 
-    # bar_num_list = Array{String,1}()
-    # for i = 1:length(A_s)
-    #     (fc′, bar_num) = find_fc′(A_s[i], f_y, d, b, j)
-    #     value_to_plot[i, 1] = A_s[i]
-    #     value_to_plot[i, 2] = fc′
-    #     push!(bar_num_list, bar_num)
-    # end
-
-    # #visualization
-    # #GLMakie.activate!()
-    # # tell julia to use GLMakie
-    # f1 = Figure(resolution=(800, 800))
-    # ax1 = Axis(f1[1, 1], xlabel="A_s", ylabel="fc′")#, aspect = DataAspect(), xgrid = false, ygrid = false)
-    # GLMakie.scatter!(ax1, value_to_plot[:, 1], value_to_plot[:, 2], color=:green)
-
-    # return f1
 
     #visualization
     GLMakie.activate!()
     # tell julia to use GLMakie
-    f = Figure(resolution=(1200, 800)) #initialize with resolution
-    ax = Axis3(f[1, 1], xlabel="M_u[ft]", ylabel="j", zlabel="Compressive Strength of Concrete")
+
+    f1 = Figure(resolution=(1200, 800)) #initialize with resolution
+    ax1 = Axis3(f1[1, 1], xlabel="j", ylabel="A_s", zlabel="Compressive Strength of Concrete")
     #initialize 3d axis with labels
-    scatter!(ax, all_M_u_list, all_j_list, all_fc′_list, color=all_fc′_list) #plot all data
+    scatter!(ax1, j_within_limits, A_s_within_limits, fc′_within_limits, color=fc′_within_limits) #plot all data
+    scatter!(ax1, j_when_fc′_is_negative, A_s_when_fc′_is_negative, negative_fc′, color="gray") #plot all data
 
-    return f
-
-
+    return f1
 
 end
 end

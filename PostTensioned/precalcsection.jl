@@ -1,6 +1,8 @@
+include("pixelgeo.jl")
+
 L = 200.0
 t = 20.0
-lc = 10.0
+Lc = 10.0
 
 nodes = fullpixel(L, t, Lc)
 

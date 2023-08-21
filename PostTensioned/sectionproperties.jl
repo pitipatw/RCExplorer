@@ -31,8 +31,6 @@ function getprop(target_a::Float64, L::Float64, t::Float64, Lc::Float64;
         pixelpts = pts[pointsinpixel(nodes, pts), :]
         total_area = dx * dy * length(pixelpts[:, 1])
   
-
-
         y_top = maximum(nodes[:, 2])
         y_bot = minimum(nodes[:, 2])
         if target_a > total_area
@@ -40,54 +38,61 @@ function getprop(target_a::Float64, L::Float64, t::Float64, Lc::Float64;
             cgcomp = 0.0
             return depth, cgcomp
         end
-        ub = y_top - y_bot
-        lb = 0.0
-        depth = (lb + ub) / 2 #initializing a variable
-        counter = 0
-        global ys = pixelpts[:, 2]
-        ys_single = unique(ys)
-        out = Matrix{Float64}(undef, length(ys_single), 3)
-        for i in eachindex(ys_single)
-            yi = ys_single[length(ys_single) - i + 1]
-            # println(yi)
-            # yi = ys_single[i]
-            # c_pos = y_top - depth
-            chk = ys .> yi
-            com_pts = pixelpts[chk, :]
-            ydx = ys[chk] .* (dx * dy)
-            # y2dx = ys[chk] .^ 2 .* (dx * dy)
-            area = dx * dy * size(com_pts)[1]
-            # inertia = sum(y2dx)
-            # @show area
-            # @show sum(ydx)
-            if area == 0 
-                cg = 0 
-            else
-                cg = sum(ydx) / area
-            end 
-            # println(area)
-            out[i, :] = [yi, area, cg ] # inertia]
 
+        if target_a == 0 
+        elseif target_a  > 0 
+
+            ub = y_top - y_bot
+            lb = 0.0
+            depth = (lb + ub) / 2 #initializing a variable
+            counter = 0
+            global ys = pixelpts[:, 2]
+            ys_single = unique(ys)
+            out = Matrix{Float64}(undef, length(ys_single), 3)
+            for i in eachindex(ys_single)
+                yi = ys_single[length(ys_single) - i + 1]
+                # println(yi)
+                # yi = ys_single[i]
+                # c_pos = y_top - depth
+                chk = ys .> yi
+                com_pts = pixelpts[chk, :]
+                ydx = ys[chk] .* (dx * dy)
+                # y2dx = ys[chk] .^ 2 .* (dx * dy)
+                area = dx * dy * size(com_pts)[1]
+                # inertia = sum(y2dx)
+                # @show area
+                # @show sum(ydx)
+                if area == 0 
+                    cg = 0 
+                else
+                    cg = sum(ydx) / area
+                end 
+                # println(area)
+                out[i, :] = [yi, area, cg ] # inertia]
+
+            end
+
+            CSV.write("sections//"*filename*".csv", DataFrame(out, :auto), header=false)
+            println("File created.")
+            data = CSV.read("sections//"*filename*".csv", header=false, DataFrame)
         end
+        # println(data)
+        A = linear_interpolation(data[:, 2], data[:, 1])
+        cgy = linear_interpolation(data[:, 2], data[:, 3])
+        # I = linear_interpolation(data[:, 2], data[:, 4])
+        # I = linear_interpolation(data[:,1], data[:,3])
 
-        CSV.write("sections//"*filename*".csv", DataFrame(out, :auto), header=false)
-        println("File created.")
-        data = CSV.read("sections//"*filename*".csv", header=false, DataFrame)
-    end
-    # println(data)
-    A = linear_interpolation(data[:, 2], data[:, 1])
-    cgy = linear_interpolation(data[:, 2], data[:, 3])
-    # I = linear_interpolation(data[:, 2], data[:, 4])
-    # I = linear_interpolation(data[:,1], data[:,3])
-
-    maxA = maximum(data[:, 2])
-    minA = minimum(data[:, 2])
+        maxA = maximum(data[:, 2])
+        minA = minimum(data[:, 2])
 
 
 
-    depth = A(target_a)
-    cgcomp = cgy(target_a)
-    return depth, cgcomp
+        depth = A(target_a)
+        cgcomp = cgy(target_a)
+        return depth, cgcomp
+    else
+        println("Error")
+        return NaN, NaN
 end
 
 

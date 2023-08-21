@@ -38,7 +38,7 @@ function main(cin)
                 ne = 20 #somehow get the number of elements
                 # nc = 4 #number of available choices
                 nc = size(cin,1)
-                outr = Vector{Matrix{Float64}}(undef, ns)
+                outr = Vector{Matrix{Float64}}()
                 # for si = 1:ns
                 for i = 1:ns
                     c1 = Vector{Float64}(undef, ne)
@@ -54,7 +54,8 @@ function main(cin)
                     # c2 = cin[:,8] .< repeat(ec_max, nc)
                     cout = copy(c1) # .&& c2
                     check = Bool.(sum(cout, dims=2))
-            
+                    println(i)
+                    @show sum(check)
                     if sum(check) == 0
                         println("No results found")
                         push!(outr, zeros(1,8))

@@ -38,11 +38,13 @@ function fc2e(fc′::Real)
     out = -0.0626944435544512 * fc′^2 + 10.0086510099949 * fc′ + 84.14807
    return  out
 end
+
+
 function calcap(fc′, as, ec, fpe;
     # L = 102.5,
     # t = 17.5,
     # Lc = 15.,
-    L = 202.5,
+    L = 402.5,
     t = 17.5,
     Lc = 15.,
     Ep = 200_000,
@@ -55,6 +57,8 @@ function calcap(fc′, as, ec, fpe;
     # filename = "pixel_$L_$t_$Lc.csv"
     # section = CSV.read(filename, header=true)
     d = 1.5*L
+
+    
     ac = 230 #get from the sectin properties
 
 

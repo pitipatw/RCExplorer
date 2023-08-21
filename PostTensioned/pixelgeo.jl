@@ -155,9 +155,7 @@ function pointsinpixel(nodes::Matrix{Float64}, points::Matrix{Float64})
     stat = inpoly2(points, nodes, edges, atol =tol)
 
     # poly = Polygon(nodes...)
-
-
-
+    
     return stat[:,1]
 end
 

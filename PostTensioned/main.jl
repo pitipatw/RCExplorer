@@ -9,8 +9,11 @@ include("calstr.jl") #calculating strength
 include("getterrain.jl")
 
 
-
-cin = getterrrain() 
+"""
+cin format
+fc', as, ec, fpe, pu, mu, vu, embodied
+"""
+cin = getterrain(test = false) 
 #HTTP connection
 function main(cin)
     #initialize the server
@@ -21,7 +24,7 @@ function main(cin)
                 today = string(Dates.today())
                 today = replace(today, "-" => "_")
                 filename = today*".json"
-                data = JSON.parse(msg, dicttype=Dict{String,Float64})
+                data = JSON.parse(msg, dicttype=Dict{String,Any})
 
                 open(joinpath(@__DIR__, "input_"*filename), "w") do f
                     write(f, msg)
@@ -34,29 +37,34 @@ function main(cin)
                 ns = length(data)
                 ne = 20 #somehow get the number of elements
                 # nc = 4 #number of available choices
-                nc = size(calc)[1]
+                nc = size(cin,1)
                 outr = Vector{Matrix{Float64}}(undef, ns)
                 # for si = 1:ns
                 for i = 1:ns
-                    # pu = 220.0
-                    # mu = 35.0
-                    # vu = 10.0
-                    ec_max = 0.7
+                    c1 = Vector{Float64}(undef, ne)
+                    # c2 = Vector{Float64}(undef, ne)
 
-                    pu = data[i]["pu"]
-                    mu = data[i]["mu"]
-                    vu = data[i]["vu"]
+                    pu = parse(Float64,data[i]["pu"])
+                    mu = parse(Float64,data[i]["mu"])
+                    vu = parse(Float64,data[i]["vu"])
                     ec_max = data[i]["ec_max"]
-
-                    c1 = cin[:,5:7] .> repeat([pu, mu, vu], nc)'
-                    c2 = cin[:,8] .< repeat(ec_max, nc)
-                    cout = c1 .&& c2
-
-                    # outi = cin[cout,:]
-                    push!( outr, cin[cout,:])
-    
+                    
+                    # @show repeat([pu, mu, vu], outer = (1,nc))'
+                    c1 = cin[:,5:7] .> repeat([pu, mu, vu], outer = (1,nc))'
+                    # c2 = cin[:,8] .< repeat(ec_max, nc)
+                    cout = copy(c1) # .&& c2
+                    check = Bool.(sum(cout, dims=2))
+            
+                    if sum(check) == 0
+                        println("No results found")
+                        push!(outr, zeros(1,8))
+                        
+                    else
+                    push!(outr, cin[check,:])
+                    end
+                    
                 end
-
+                println(outr)
                 jsonfile = JSON.json(outr)
                 HTTP.send(ws,jsonfile)
                 open(joinpath(@__DIR__,"output_"*filename), "w") do f
@@ -74,8 +82,8 @@ function main(cin)
     # end
 end
 
-
-server = main()
+close(server)
+server = main(cin)
 close(server)
 
 

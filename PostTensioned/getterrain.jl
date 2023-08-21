@@ -39,7 +39,10 @@ function fc2e(fc′::Real)
    return  out
 end
 function calcap(fc′, as, ec, fpe;
-    L = 102.5,
+    # L = 102.5,
+    # t = 17.5,
+    # Lc = 15.,
+    L = 202.5,
     t = 17.5,
     Lc = 15.,
     Ep = 200_000,
@@ -169,10 +172,10 @@ function getterrain(; test=true)
         range_fc′ = 28.:7.:56.
         range_as = [99.0, 140.0]
         range_ec = 0.5:0.1:1.2
-        range_fpe = (0.1:0.1:0.7) * 1860.0
+        range_fpe = (0.05:0.05:0.7) * 1860.0
     else
         #test
-        range_fc′ = 28
+        range_fc′ = 28.
         range_as = 99.0
         range_ec = 0.5
         range_fpe = 186.0

@@ -6,11 +6,11 @@ include("ptFunc.jl")
 
 
 
-range_fc′ = 28.:7.:56.
-range_as = [99.0, 140.0]
-ec_max = 0.7
-range_ec = 0.5:0.1:ec_max
-range_fpe = (0.1:0.1:0.7) * 1860.0
+# range_fc′ = 28.:7.:56.
+# range_as = [99.0, 140.0]
+# ec_max = 0.7
+# range_ec = 0.5:0.1:ec_max
+# range_fpe = (0.1:0.1:0.7) * 1860.0
 
 
 #old version
@@ -41,12 +41,12 @@ end
 
 
 function calcap(fc′, as, ec, fpe;
-    # L = 102.5,
-    # t = 17.5,
-    # Lc = 15.,
-    L = 402.5,
+    L = 102.5,
     t = 17.5,
     Lc = 15.,
+    # L = 402.5,
+    # t = 17.5,
+    # Lc = 15.,
     Ep = 200_000,
     shear_ratio = 0.30,
     fR1 = 2.0,
@@ -59,7 +59,7 @@ function calcap(fc′, as, ec, fpe;
     d = 1.5*L
 
     
-    ac = 230 #get from the sectin properties
+    ac = getprop(0.0,L,t,Lc) #get from the sectin properties
 
 
     #Pure Compression Capacity
@@ -82,8 +82,11 @@ function calcap(fc′, as, ec, fpe;
 
     #concrete compression area balanced with steel tension force.
     acomp = as * fps / (0.85 * fc′)
-    steelpos = ec*L
-
+    steelpos = ec*-L
+    if acomp > ac 
+        println("Acomp exceeds Ac, using Ac instead")
+        acomp = ac
+    end
     depth, cgcomp= getprop(acomp, L, t, Lc)
     # mn_steel = as * fps * arm / 1e6 #[kNm]
 
@@ -94,21 +97,20 @@ function calcap(fc′, as, ec, fpe;
     ϵc = c * ϵs / (steelpos - c)
 
     if ϵc > 0.003
-        println("Compression strain is $ϵc which is more than 0.003")
+        # println("Compression strain is $ϵc which is more than 0.003")
         #recalc based on the compression strain
         #calculate the new compression area based on the strain
         #first find depth based on the 0.003 strain at the top
 
         ϵc_new = 0.003
-        depth = L
+        depth = L #first guess
         tol = 0.001
 
         while tol > 0.001
-
             ϵs_new = ϵc_new*(steelpos - depth) / depth
             fps_new = ϵs_new * Ep
 
-            acomp = as * fps_new / (0.85 * fc′)
+            @show acomp = as * fps_new / (0.85 * fc′)
     
             depth_new, cgcomp= getprop(acomp, L, t, Lc)
             tol = abs(depth_new - depth)/depth
@@ -176,7 +178,7 @@ function getterrain(; test=true)
         range_fc′ = 28.:7.:56.
         range_as = [99.0, 140.0]
         range_ec = 0.5:0.1:1.2
-        range_fpe = (0.05:0.05:0.7) * 1860.0
+        range_fpe = (0.00:0.02:0.3) * 1860.0
     else
         #test
         range_fc′ = 28.
@@ -226,4 +228,4 @@ time = Dates.now()
 CSV.write("results//output_$date.csv", DataFrame(results, :auto))
 
 
-calcap(28., 99.0, 0.5, 1600.0)
+# calcap(28., 99.0, 0.5, 1600.0)

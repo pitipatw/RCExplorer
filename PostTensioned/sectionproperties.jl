@@ -8,7 +8,7 @@ Get the depth and centroid of the section given eval points and target area
 This is for the full points evaluation
 """
 function getprop(target_a::Float64, L::Float64, t::Float64, Lc::Float64;
-    test=false,)
+    test=false)
     # check file in "sections" folder for a file name
     # "pixel_$L_$t_$Lc.csv"
     if test
@@ -18,7 +18,8 @@ function getprop(target_a::Float64, L::Float64, t::Float64, Lc::Float64;
         filename = replace(filename, "." => "_")
     end
 
-    fullpath = joinpath(@__DIR__, "sections", filename*".csv")
+    fullpath = joinpath(@__DIR__, "sections", filename * ".csv")
+
 
     if isfile(fullpath)
         data = Matrix(CSV.read(fullpath, header=false, DataFrame))
@@ -30,7 +31,7 @@ function getprop(target_a::Float64, L::Float64, t::Float64, Lc::Float64;
         pts = fillpoints(nodes, dx, dy)
         pixelpts = pts[pointsinpixel(nodes, pts), :]
         total_area = dx * dy * length(pixelpts[:, 1])
-  
+
         y_top = maximum(nodes[:, 2])
         y_bot = minimum(nodes[:, 2])
         if target_a > total_area
@@ -39,9 +40,7 @@ function getprop(target_a::Float64, L::Float64, t::Float64, Lc::Float64;
             return depth, cgcomp
         end
 
-        if target_a == 0 
-        elseif target_a  > 0 
-
+        if target_a >= 0
             ub = y_top - y_bot
             lb = 0.0
             depth = (lb + ub) / 2 #initializing a variable
@@ -50,7 +49,7 @@ function getprop(target_a::Float64, L::Float64, t::Float64, Lc::Float64;
             ys_single = unique(ys)
             out = Matrix{Float64}(undef, length(ys_single), 3)
             for i in eachindex(ys_single)
-                yi = ys_single[length(ys_single) - i + 1]
+                yi = ys_single[length(ys_single)-i+1]
                 # println(yi)
                 # yi = ys_single[i]
                 # c_pos = y_top - depth
@@ -62,20 +61,29 @@ function getprop(target_a::Float64, L::Float64, t::Float64, Lc::Float64;
                 # inertia = sum(y2dx)
                 # @show area
                 # @show sum(ydx)
-                if area == 0 
-                    cg = 0 
+                if area == 0
+                    cg = 0
                 else
                     cg = sum(ydx) / area
-                end 
+                end
                 # println(area)
-                out[i, :] = [yi, area, cg ] # inertia]
+                out[i, :] = [yi, area, cg] # inertia]
 
             end
 
-            CSV.write("sections//"*filename*".csv", DataFrame(out, :auto), header=false)
+            CSV.write("sections//" * filename * ".csv", DataFrame(out, :auto), header=false)
             println("File created.")
-            data = CSV.read("sections//"*filename*".csv", header=false, DataFrame)
+        else
+            println("Error")
+            return NaN, NaN
         end
+
+    end
+
+    data = CSV.read("sections//" * filename * ".csv", header=false, DataFrame)
+    if target_a == 0
+        return maximum(data[:, 2])
+    else
         # println(data)
         A = linear_interpolation(data[:, 2], data[:, 1])
         cgy = linear_interpolation(data[:, 2], data[:, 3])
@@ -90,9 +98,8 @@ function getprop(target_a::Float64, L::Float64, t::Float64, Lc::Float64;
         depth = A(target_a)
         cgcomp = cgy(target_a)
         return depth, cgcomp
-    else
-        println("Error")
-        return NaN, NaN
+    end
+
 end
 
 

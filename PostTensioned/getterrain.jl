@@ -41,12 +41,12 @@ end
 
 
 function calcap(fc′, as, ec, fpe;
-    L = 102.5,
-    t = 17.5,
-    Lc = 15.,
-    # L = 402.5,
+    # L = 102.5,
     # t = 17.5,
     # Lc = 15.,
+    L = 202.5,
+    t = 17.5,
+    Lc = 15.,
     Ep = 200_000,
     shear_ratio = 0.30,
     fR1 = 2.0,
@@ -178,7 +178,7 @@ function getterrain(; test=true)
         range_fc′ = 28.:7.:56.
         range_as = [99.0, 140.0]
         range_ec = 0.5:0.1:1.2
-        range_fpe = (0.00:0.02:0.3) * 1860.0
+        range_fpe = (0.00:0.02:0.5) * 1860.0
     else
         #test
         range_fc′ = 28.

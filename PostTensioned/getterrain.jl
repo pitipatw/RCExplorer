@@ -41,12 +41,12 @@ end
 
 
 function calcap(fc′, as, ec, fpe;
-    # L = 102.5,
-    # t = 17.5,
-    # Lc = 15.,
-    L = 202.5,
+    L = 102.5,
     t = 17.5,
     Lc = 15.,
+    # L = 202.5,
+    # t = 17.5,
+    # Lc = 15.,
     Ep = 200_000,
     shear_ratio = 0.30,
     fR1 = 2.0,

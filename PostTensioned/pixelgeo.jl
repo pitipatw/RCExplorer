@@ -10,7 +10,7 @@ t = thickness
 Lc = straight region of pixel (length before arc)
 n = number of discretizations for arc
 """
-function makepixel(L::Real, t::Real, Lc::Real; n = 100)
+function make_pixel_geometry(L::Real, t::Real, Lc::Real; n = 10)
 
     #constants
     θ = pi/6
@@ -43,13 +43,13 @@ function makepixel(L::Real, t::Real, Lc::Real; n = 100)
 
     arcs = [p5 .+ r .* [-cos(ang), sin(ang)] for ang in psirange]
 
-    points = [p1, p2, p3, p4, arcs..., p4′, p3′, p2′]
+    points = [p1, p2, p3, arcs..., p3′, p2′]
 
-    return points, p5, r
+    return points
 end
 
 function fullpixel(L::Real, t::Real, Lc::Real; n = 10)
-    g1 = makepixel(L, t, Lc, n = n) ; 
+    g1 = make_pixel_geometry(L, t, Lc, n = n) ; 
     ptx1 = [i[1] for i in g1[1]]
     pty1 = [i[2] for i in g1[1]]
     #remove first point (0.0)

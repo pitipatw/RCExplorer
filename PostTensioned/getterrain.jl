@@ -212,8 +212,6 @@ function getterrain(; test=true)
 
                     idx = map(n,idx_all)
                     results[idx,:] = [fc′, as, ec, fpe, pu, mu, vu, embodied]
-
-
                 end
             end
         end

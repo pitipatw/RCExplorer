@@ -15,7 +15,8 @@ cin format
 fc', as, ec, fpe, pu, mu, vu, embodied
 """
 
-# @time cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
+
+cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
 #HTTP connection
 function main(cin)
     #initialize the server

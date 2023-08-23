@@ -50,7 +50,7 @@ function main(cin)
                     pu = parse(Float64,data[i]["pu"])
                     mu = parse(Float64,data[i]["mu"])
                     vu = parse(Float64,data[i]["vu"])
-                    ec_max = data[i]["ec_max"]
+                    ec_max = parse(Float64,data[i]["ec_max"])
                     
                     # @show repeat([pu, mu, vu], outer = (1,nc))'
                     if data[i]["t"] == "Beam"

@@ -28,3 +28,5 @@ compoundsection.ymin
 
 
 area_from_depth(compoundsection,0.0)
+
+sutherland_hodgman(section[1], 250.0)

@@ -1,4 +1,5 @@
 using Dates
+using BenchmarkTools
 
 include("pixelgeo.jl")
 include("sectionproperties.jl")
@@ -40,13 +41,13 @@ function fc2e(fc′::Real)
 end
 
 
-function calcap(fc′, as, ec, fpe;
+function calcap(fc′, as, ec, fpe,L,t,Lc;
     # L = 102.5,
     # t = 17.5,
     # Lc = 15.,
-    L = 202.5,
-    t = 17.5,
-    Lc = 15.,
+    # L = 202.5,
+    # t = 17.5,
+    # Lc = 15.,
     Ep = 200_000,
     shear_ratio = 0.30,
     fR1 = 2.0,
@@ -173,7 +174,7 @@ function calcap(fc′, as, ec, fpe;
     return pu, mu, vu, embodied
 end
 
-function getterrain(; test=true)
+function getterrain(L,t,Lc; test=true)
     if !test
         range_fc′ = 28.:7.:56.
         range_as = [99.0, 140.0]
@@ -207,7 +208,7 @@ function getterrain(; test=true)
                     ec = range_ec[idx_ec]
                     fpe = range_fpe[idx_fpe]
 
-                    pu, mu, vu, embodied = calcap(fc′, as, ec, fpe)
+                    pu, mu, vu, embodied = calcap(fc′, as, ec, fpe, L, t, Lc)
                     idx_all = [idx_fc′, idx_as, idx_ec, idx_fpe]
 
                     idx = map(n,idx_all)
@@ -223,9 +224,11 @@ function getterrain(; test=true)
 end
 
 results = getterrain(test=false)
+# 11.147s , 575.72 MiB allocation
 date = Dates.today()
 time = Dates.now()
 CSV.write("results//output_$date.csv", DataFrame(results, :auto))
+
 
 
 # calcap(28., 99.0, 0.5, 1600.0)

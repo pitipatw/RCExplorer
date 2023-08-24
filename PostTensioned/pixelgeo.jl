@@ -2,6 +2,23 @@ using LinearAlgebra
 using PolygonInbounds
 using GeometryTypes
 using StaticArrays
+
+"""
+Turn a vector of vector into matrix
+"""
+function vecvec_to_matrix(vecvec)
+    dim1 = length(vecvec)
+    dim2 = length(vecvec[1])
+    my_array = zeros(Float64, dim1, dim2)
+    for i in 1:dim1
+        for j in 1:dim2
+            my_array[i,j] = vecvec[i][j]
+        end
+    end
+    return my_array
+end
+
+
 """
 By Keith JL.
     makepixel(L::Real, t::Real, Lc::Real; n = 10)
@@ -10,7 +27,7 @@ t = thickness
 Lc = straight region of pixel (length before arc)
 n = number of discretizations for arc
 """
-function makepixel(L::Real, t::Real, Lc::Real; n = 100)
+function make_pixel_geometry(L::Real, t::Real, Lc::Real; n = 10)
 
     #constants
     θ = pi/6
@@ -43,13 +60,72 @@ function makepixel(L::Real, t::Real, Lc::Real; n = 100)
 
     arcs = [p5 .+ r .* [-cos(ang), sin(ang)] for ang in psirange]
 
-    points = [p1, p2, p3, p4, arcs..., p4′, p3′, p2′]
+    points = [p1, p2, p3, arcs..., p3′, p2′]
 
-    return points, p5, r
+    return points
 end
 
-function fullpixel(L::Real, t::Real, Lc::Real; n = 10)
-    g1 = makepixel(L, t, Lc, n = n) ; 
+rotate_2d_about_origin(point::AbstractVector{<:Real}, angle::Float64) = [cos(angle) -sin(angle); sin(angle) cos(angle)] * point
+rotate_2d_about_origin(point::Matrix{<:Real}, angle::Float64) = point * [cos(angle) -sin(angle); sin(angle) cos(angle)] 
+move_2d(point::Matrix{<:Real}, vector::Matrix{<:Real}) = point .+ vector
+
+"""
+Can be replaced with ylayup making by Keith jl.
+"""
+function make_Y_layup_section(L::Real, t::Real, Lc::Real; n = 10, offset = 0.)
+# function fullpixel(L::Real, t::Real, Lc::Real; n = 10)
+    pixel = vecvec_to_matrix(make_pixel_geometry(L, t, Lc; n = n))
+
+#offset from origin
+    θ = pi / 6
+    offset_vector = offset .* [cos(θ), -sin(θ)]
+
+    #base pixel
+    base_pixel = [point + offset_vector for point in pixel]
+
+    #right pixel 
+    right_pixel = rotate_2d_about_origin(base_pixel, pi/6)
+
+    #rotate to the top
+    # newpoints1 = Matrix{Float64}(undef, size(nodes)[1], 2)
+    top_pixel = rotate_2d_about_origin(right_pixel, 2*pi/3)
+    left_pixel = rotate_2d_about_origin(right_pixel, 4*pi/3)
+    # # draw a full pixelframe section
+    # for i = 1:size(nodes)[1]
+    #     x = nodes[i,1]
+    #     y = nodes[i,2]
+    #     r = sqrt(x^2 + y^2)
+    #     θ = atand(y/x)
+
+    #     newθ = θ + 120.0
+    #     newx = r*cosd(newθ)
+    #     newy = r*sind(newθ)
+    #     newpoints1[i,:] = [newx, newy]
+    # end
+    
+    # #rotate to the side (flip)
+    # newpoints2 = Matrix{Float64}(undef, size(nodes)[1], 2)
+    # # draw a full pixelframe section
+    # for i = 1:size(nodes)[1]
+    #     x = nodes[i,1]
+    #     y = nodes[i,2]
+    #     r = sqrt(x^2 + y^2)
+    #     θ = atand(y/x)
+   
+    #     newθ = θ + 240.0
+    #     newx = r*cosd(newθ)
+    #     newy = r*sind(newθ)
+
+    #     newpoints2[i,:] = [newx, newy]
+    # end
+
+    Y3pixel = vcat(right_pixel, top_pixel, left_pixel)
+
+    return Y3pixel
+end
+
+function make_X2_layup_section(L::Real, t::Real, Lc::Real; n = 10)
+    g1 = makepixel(L, t, Lc, n = n)
     ptx1 = [i[1] for i in g1[1]]
     pty1 = [i[2] for i in g1[1]]
     #remove first point (0.0)
@@ -61,43 +137,55 @@ function fullpixel(L::Real, t::Real, Lc::Real; n = 10)
     ptx = ptx1
     pty = pty1
 
-    nodes = [ptx pty]
+    right_pixel = rotate_2d_about_origin([ptx pty], pi/6)
 
-    #rotate to the top
-    newpoints1 = Matrix{Float64}(undef, size(nodes)[1], 2)
-    # draw a full pixelframe section
-    for i = 1:size(nodes)[1]
-        x = nodes[i,1]
-        y = nodes[i,2]
-        r = sqrt(x^2 + y^2)
-        θ = atand(y/x)
+    top_pixel = rotate_2d_about_origin(right_pixel, pi/2)
+    left_pixel = rotate_2d_about_origin(top_pixel, pi/2)
+    bot_pixel = rotate_2d_about_origin(left_pixel, pi/2)
 
-        newθ = θ + 120.0
-        newx = r*cosd(newθ)
-        newy = r*sind(newθ)
-        newpoints1[i,:] = [newx, newy]
-    end
+
+    distance = top_pixel[2,2] - right_pixel[end,2]
+    right_pixel = move_2d(right_pixel, [distance 0])
+    top_pixel = move_2d(top_pixel, [0 distance])
+    left_pixel = move_2d(left_pixel, [-distance 0])
+    bot_pixel = move_2d(bot_pixel, [0 -distance])
+
+    # # draw a full pixelframe section
+    # for i = 1:size(nodes)[1]
+    #     x = nodes[i,1]
+    #     y = nodes[i,2]
+    #     r = sqrt(x^2 + y^2)
+    #     θ = atand(y/x)
+
+    #     newθ = θ + 120.0
+    #     newx = r*cosd(newθ)
+    #     newy = r*sind(newθ)
+    #     newpoints1[i,:] = [newx, newy]
+    # end
     
-    #rotate to the side (flip)
-    newpoints2 = Matrix{Float64}(undef, size(nodes)[1], 2)
-    # draw a full pixelframe section
-    for i = 1:size(nodes)[1]
-        x = nodes[i,1]
-        y = nodes[i,2]
-        r = sqrt(x^2 + y^2)
-        θ = atand(y/x)
+    # #rotate to the side (flip)
+    # newpoints2 = Matrix{Float64}(undef, size(nodes)[1], 2)
+    # # draw a full pixelframe section
+    # for i = 1:size(nodes)[1]
+    #     x = nodes[i,1]
+    #     y = nodes[i,2]
+    #     r = sqrt(x^2 + y^2)
+    #     θ = atand(y/x)
    
-        newθ = θ + 240.0
-        newx = r*cosd(newθ)
-        newy = r*sind(newθ)
+    #     newθ = θ + 240.0
+    #     newx = r*cosd(newθ)
+    #     newy = r*sind(newθ)
 
-        newpoints2[i,:] = [newx, newy]
-    end
+    #     newpoints2[i,:] = [newx, newy]
+    # end
 
-    newnodes = vcat(nodes, newpoints1, newpoints2)
+    X2pixel = vcat(top_pixel, bot_pixel)
 
-    return newnodes
+    return X2pixel
 end
+
+
+
 
 #Will have to make a half pixel here.
 #In the hope that I can just mirror that whole thing and make it faster? 
@@ -105,20 +193,7 @@ function halfpixel(L::Real, t::Real, Lc::Real; n = 10)
     println("Hang in there. I'm working on it.")
 end
 
-"""
-Turn a vector of vector into matrix
-"""
-function vecvec_to_matrix(vecvec)
-    dim1 = length(vecvec)
-    dim2 = length(vecvec[1])
-    my_array = zeros(Float64, dim1, dim2)
-    for i in 1:dim1
-        for j in 1:dim2
-            my_array[i,j] = vecvec[i][j]
-        end
-    end
-    return my_array
-end
+
 
 """
 fill a box that tighly confines pixel geometry with grid points, with a grid size dx, dy

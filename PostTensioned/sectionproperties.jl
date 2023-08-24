@@ -6,20 +6,47 @@ include("pixelgeo.jl")
 """
 Get the depth and centroid of the section given eval points and target area
 This is for the full points evaluation
+
+    Todo, Beam or Column -> load the right one
+
+    #filename template
+# pixel_typesoflayup_dates.csv
+
+#Beam
+# pixel_y3-L-t-Lc.csv
+
+#Column
+# pixel_x2-L-t-Lc.csv
+# pixel_x4-L-t-Lc.csv
+
 """
 function getprop(target_a::Float64, L::Float64, t::Float64, Lc::Float64;
-    test=false)
+    test=false, type="Beam")
+
+    @assert target_a >= 0
     # check file in "sections" folder for a file name
     # "pixel_$L_$t_$Lc.csv"
     if test
         filename = "dummy"
     else
-        filename = "pixel-$L-$t-$Lc"
-        filename = replace(filename, "." => "_")
+        if type == "Beam"
+            filename = "pixel_y3-$L-$t-$Lc"
+
+        elseif type == "Column"
+            println("Underconstruction...")
+
+            #either 
+            filename = "pixel_x2-$L-$t-$Lc"
+
+            #or 
+            filename = "pixel_x4-$L-$t-$Lc"
+        else
+            println("Wrong type")
+        end
     end
 
+    filename = replace(filename, "." => "_")
     fullpath = joinpath(@__DIR__, "sections", filename * ".csv")
-
 
     if isfile(fullpath)
         data = Matrix(CSV.read(fullpath, header=false, DataFrame))
@@ -27,56 +54,69 @@ function getprop(target_a::Float64, L::Float64, t::Float64, Lc::Float64;
         println("File not found, creating a new one...")
         dx = 0.5
         dy = 0.5
-        nodes = fullpixel(L, t, Lc)
-        pts = fillpoints(nodes, dx, dy)
-        pixelpts = pts[pointsinpixel(nodes, pts), :]
-        total_area = dx * dy * length(pixelpts[:, 1])
 
-        y_top = maximum(nodes[:, 2])
-        y_bot = minimum(nodes[:, 2])
-        if target_a > total_area
-            depth = y_top - y_bot
-            cgcomp = 0.0
-            return depth, cgcomp
-        end
+        
+        if type == "Beam"
+            nodes = fullpixel(L, t, Lc)
+            pts = fillpoints(nodes, dx, dy)
+            pixelpts = pts[pointsinpixel(nodes, pts), :]
+            total_area = dx * dy * length(pixelpts[:, 1])
 
-        if target_a >= 0
-            ub = y_top - y_bot
-            lb = 0.0
-            depth = (lb + ub) / 2 #initializing a variable
-            counter = 0
-            global ys = pixelpts[:, 2]
-            ys_single = unique(ys)
-            out = Matrix{Float64}(undef, length(ys_single), 3)
-            for i in eachindex(ys_single)
-                yi = ys_single[length(ys_single)-i+1]
-                # println(yi)
-                # yi = ys_single[i]
-                # c_pos = y_top - depth
-                chk = ys .> yi
-                com_pts = pixelpts[chk, :]
-                ydx = ys[chk] .* (dx * dy)
-                # y2dx = ys[chk] .^ 2 .* (dx * dy)
-                area = dx * dy * size(com_pts)[1]
-                # inertia = sum(y2dx)
-                # @show area
-                # @show sum(ydx)
-                if area == 0
-                    cg = 0
-                else
-                    cg = sum(ydx) / area
-                end
-                # println(area)
-                out[i, :] = [yi, area, cg] # inertia]
-
+            y_top = maximum(nodes[:, 2])
+            y_bot = minimum(nodes[:, 2])
+            if target_a > total_area
+                depth = y_top - y_bot
+                cgcomp = 0.0
+                return depth, cgcomp
             end
 
-            CSV.write("sections//" * filename * ".csv", DataFrame(out, :auto), header=false)
-            println("File created.")
+            if target_a >= 0
+                ub = y_top - y_bot
+                lb = 0.0
+                depth = (lb + ub) / 2 #initializing a variable
+                counter = 0
+                global ys = pixelpts[:, 2]
+                ys_single = unique(ys)
+                out = Matrix{Float64}(undef, length(ys_single), 3)
+                for i in eachindex(ys_single)
+                    yi = ys_single[length(ys_single)-i+1]
+                    # println(yi)
+                    # yi = ys_single[i]
+                    # c_pos = y_top - depth
+                    chk = ys .> yi
+                    com_pts = pixelpts[chk, :]
+                    ydx = ys[chk] .* (dx * dy)
+                    # y2dx = ys[chk] .^ 2 .* (dx * dy)
+                    area = dx * dy * size(com_pts)[1]
+                    # inertia = sum(y2dx)
+                    # @show area
+                    # @show sum(ydx)
+                    if area == 0
+                        cg = 0
+                    else
+                        cg = sum(ydx) / area
+                    end
+                    # println(area)
+                    out[i, :] = [yi, area, cg] # inertia]
+
+                end
+
+                CSV.write("sections//" * filename * ".csv", DataFrame(out, :auto), header=false)
+                println("File created.")
+            else
+                println("Error")
+                return NaN, NaN
+            end
+
+        elseif type == "Column"
+            println("You are in column")
+            #nodes will be array, either 2 or 4
+            # will work on them separately, then combine them
+            nodes = fullpixel(L, t, Lc)
         else
-            println("Error")
-            return NaN, NaN
+            println("Wrong type")
         end
+
 
     end
 

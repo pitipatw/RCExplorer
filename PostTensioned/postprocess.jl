@@ -5,6 +5,7 @@ Post processing the choices.
     # go through each element
     elements_all = Vector{Int64}(undef, size(data,1))
     elements_to_sections = Dict{Int64, Vector{Int64}}()
+    decisions = Vector{Int64}(undef, size(data,1))
     for i in eachindex(data)
         elements_all[i] = parse(Float64,data[i]["e_idx"])
         if haskey(elements_to_sections, elements_all[i])
@@ -14,32 +15,39 @@ Post processing the choices.
         end
     end
 
-    elements_unq = unique(elements_all)
+    elements = collect(keys(elements_to_sections))
 
-    for i in eachindex(elements_unq)
-        element_idx = elements_unq[i]
-        sections = elements_to_sections[elements_unq[i]]
+    #loop each element
+    for i in eachindex(elements)
+        element_idx = elements[i] #element index (maybe not by the index i)
+        sections = elements_to_sections[elements_idx] # all section indices that associate with the element
         println(sections)
-         # number of sections in that element
+        # number of sections in that element
         ns = size(sections,1)
         # println(ns)
-
 
         #section should be in consecutive order.
         ns_min = minimum(sections) 
         ns_max = maximum(sections)
-        @show ns_min,ns_max, ns
+        # @show ns_min,ns_max, ns
         @assert ns_max - ns_min + 1 == ns
 
-        #start at mid span. 
+        element_decisions = Bool.(zeros(ns,1))
+        #start at mid span of the section
         if mod(ns,2) == 0 
             midspan_idx =  ns/2 + ns_min -1
         else
             midspan_idx = (ns+1)/2 + ns_min -1
         end
 
+        #then idx += 1 until the end of the section (ns_max)
         #idx is for the section idx
         @show idx = Int(midspan_idx)
+
+        while !prod(element_decisions)
+            
+
+
 
         global choices = outvod[idx]
         nc = size(choices,1) #number of choices
@@ -82,14 +90,21 @@ Post processing the choices.
             vu = set_vu[idx_min_embodied[k]]
             embodied = set_embodied[idx_min_embodied[k]]
             element = set_element[idx_min_embodied[k]]
-            
+
     end
 
 
 
 
              
+    optimum = Vector{Dict{String, Float64}}(undef, size(data,1))
 
+    for i in eachindex(decisions)
+        opt_idx = decision[i]
+
+        optimum[i] = outvod[i][opt_idx]
+    end
+    
 
 #         get the minimum embodied carbon configuration
 

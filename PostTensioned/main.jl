@@ -26,7 +26,7 @@ function main(cin)
                 today = string(Dates.today())
                 today = replace(today, "-" => "_")
                 filename = today*".json"
-                data = JSON.parse(msg, dicttype=Dict{String,Any})
+                global data = JSON.parse(msg, dicttype=Dict{String,Any})
 
                 open(joinpath(@__DIR__, "input_"*filename), "w") do f
                     write(f, msg)
@@ -98,17 +98,16 @@ function main(cin)
                 outvod = Vector{Vector{Dict}}(undef, size(outr,1))
                 for i = axes(outr,1)
                     temp = Vector{Dict}(undef, size(outr[i],1))
-                    for j =axes(outr[i],1)
-                        temp[j] = Dict( "fc" => outr[i][j,1], 
+                    for j = axes(outr[i],1)
+                        temp[j] = Dict( "fc" => outr[i][j,1],
                                         "as" => outr[i][j,2],
                                         "ec" => outr[i][j,3],
-                                        "fpe"=> outr[i][j,4], 
-                                        "pu" => outr[i][j,5], 
-                                        "mu" => outr[i][j,6], 
-                                        "vu" => outr[i][j,7], 
-                                        "embodied" => outr[i][j,8],
+                                        "fpe"=> outr[i][j,4],
+                                        "pu" => outr[i][j,5],
+                                        "mu" => outr[i][j,6],
+                                        "vu" => outr[i][j,7],
+                                        "embodied"=> outr[i][j,8],
                                         "element" => data[i]["e_idx"],
-
                                         )
                     end
                     outvod[i] = temp
@@ -116,12 +115,14 @@ function main(cin)
 
                 #add the last spot, for optimum choice for the section
                 #What is optimum? 
+                
+                # Post process
+                # postprocess(outvod, data)
+
                 # Minimum embodied carbon.
                 # Same ec as the previous one
                 # Same fc' as the previous one.
                 
-
-
                 global outvod
                 jsonfile = JSON.json(outvod)
                 HTTP.send(ws, jsonfile)

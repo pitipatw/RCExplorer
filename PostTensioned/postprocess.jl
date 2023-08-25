@@ -31,7 +31,7 @@ for i in eachindex(elements)
     #section should be in consecutive order.
     ns_min = minimum(sections) 
     ns_max = maximum(sections)
-    # @show ns_min,ns_max, ns
+    @show ns_min,ns_max, ns
     @assert ns_max - ns_min + 1 == ns
 
     #start at mid span of the section
@@ -40,10 +40,11 @@ for i in eachindex(elements)
     else
         mid_section_idx = (ns+1)/2 + ns_min -1
     end
-    mid_section_idx = parse(Int, mid_section_idx)
+    mid_section_idx = Int(mid_section_idx)
 
     #choices for mid section
     mid_section_choices = DataFrame(outvod[mid_section_idx])
+    println("There are $(size(mid_section_choices,1)) choices for mid section $mid_section_idx")
     #get order label
     mid_section_choices[!,"order"] = 1:size(mid_section_choices,1)
     #will loop based on this order
@@ -55,20 +56,21 @@ for i in eachindex(elements)
     current_section_idx = ns_min
     element_decisions = Bool.(zeros(ns,1))
     # element_selections = Vector{Int64}(undef, ns)
-
-    while !prod(element_decisions) 
-
+    counter = 0
+    while !prod(element_decisions) && counter < 10000
+        counter += 1
+        println("Mid idx: $mid_section_idx")
+        println("Current section index: $current_section_idx")
         if current_section_idx > ns_max #loop entire section of this element, but still doesnt find all decisions
             #reset with pick_idx_mid +=1 
             pick_idx_mid +=1
             current_section_idx = ns_min
             
-            if pick_idx_mid > length(mid_section_choices)
+        elseif pick_idx_mid > size(mid_section_choices,1)
                 println("Unresolved sections for elements $element_idx")
                 break
-            end
+    
         elseif current_section_idx != mid_section_idx #skip mid section
-        
             pick_mid_choice = mid_section_choices_sorted[pick_idx_mid,:]
             pick_mid_fc = pick_mid_choice["fc"]
             pick_mid_as = pick_mid_choice["as"]
@@ -79,9 +81,10 @@ for i in eachindex(elements)
             current_section_choices = DataFrame(outvod[current_section_idx])
 
             #only get the choices that has as and fpe
-            feasible_choices = current_section_choices[(current_section_choices[:,"as"] .== pick_mid_as) .& (current_section_choices[:,"fpe"] .== pick_mid_fpe).& (current_section_choices[:,"fc"] .== pick_mid_fpe),:]
+            feasible_choices = current_section_choices[(current_section_choices[:,"as"] .== pick_mid_as) .& (current_section_choices[:,"fpe"] .== pick_mid_fpe),:]
 
             if size(feasible_choices,1) == 0 
+                println("Cant find for section: $current_section_idx, move on to the next section")
                 #if no choices, then move on to the next choices for the mid section
                 #and start all over again.
                 current_section_idx = ns_min
@@ -89,18 +92,20 @@ for i in eachindex(elements)
                 continue
             else
                 #if there are available choices 
-                decisions[current_section_idx] = pick_idx
+                @show decisions[current_section_idx] = pick_idx
                 # element_selections[current_section_idx - ns_min + 1] = pick_idx
-                element_decisions[current_section_idx - ns_min + 1] = true
+                @show element_decisions[current_section_idx - ns_min + 1] = true
                 #move on to the next section in this element
                 current_section_idx += 1
                 pick_idx = 1 #reset for this index
             end
-
+        else
+            #current section is mid section
+            current_section_idx += 1
         end
     end
-end
 
+end
 
 # return decisions
 # end

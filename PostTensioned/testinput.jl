@@ -58,9 +58,9 @@ for i in 1:2
     mds1 = [demands(xs[i][j], p1, Ls1)[2] for j in eachindex(xs[i])]
     for j in eachindex(xs[i])
         tempj = Dict{String, Any}()
-        tempj["Pu"] = 100.0
-        tempj["Vu"] = vds1[j]
-        tempj["Mu"] = mds1[j]
+        tempj["pu"] = 100.0
+        tempj["vu"] = vds1[j]
+        tempj["mu"] = mds1[j]
         tempj["ec_max"]=  ecs[i]
         tempj["L"]=  192.0
         tempj["t"]=  10.0

@@ -11,7 +11,7 @@ function plotforces(data::Vector{Any}; cat = "mu", e = 1)
 ne = []
 for i in eachindex(data)
     nei = Int(data[i]["e_idx"])
-    println(nei)
+    # println(nei)
     if !(nei in ne)
         push!(ne, nei)
     end

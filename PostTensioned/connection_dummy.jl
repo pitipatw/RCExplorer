@@ -25,20 +25,20 @@ for i = 1:ns
     # c1 = Vector{Float64}(undef, ns)
     # c2 = Vector{Float64}(undef, ne)
 
-    pu = parse(Float64,data[i]["pu"])
-    mu = parse(Float64,data[i]["mu"])
-    vu = parse(Float64,data[i]["vu"])
+    pu = data[i]["pu"]
+    mu = data[i]["mu"]
+    vu = 0 #data[i]["vu"]
     ec_max = data[i]["ec_max"]
     
     # @show repeat([pu, mu, vu], outer = (1,nc))'
-    if data[i]["t"] == "Beam"
+    if data[i]["type"] == "Beam"
         #calculate section with 3 pieces
         #have to add 
         np = 3
         #load csv with np suffix
 
         cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
-    elseif data[i]["t"] == "Column"
+    elseif data[i]["type"] == "Column"
         #calculate section with 4 or 2 pieces
         np = 4
         #load csv with np suffix
@@ -63,9 +63,9 @@ for i = 1:ns
         println("No results found")
         push!(outr, zeros(1,8))
         # println(outr)
-        
     else
         push!(outr, cin[check,:])
+        println("results found")
         # println(outr)
     end
     
@@ -111,6 +111,10 @@ open(joinpath(@__DIR__,"output_"*filename), "w") do f
 
 end
 
+
+for i in eachindex(outvod)
+    println(size(outvod[i]))
+end
 
     # catch 
     #     println("Error")

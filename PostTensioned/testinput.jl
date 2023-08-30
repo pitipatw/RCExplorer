@@ -35,27 +35,29 @@ end
 
 include("load.jl")
 
-Ls1 = 500.0
-Ls2 = 1000.0
+Ls1 = 2000.0 #mm
+Ls2 = 1000. #mm
+Lss = [Ls1, Ls2]
+
 println("$w kN/m2 ")
 p1 = w*3*Ls1^2/2/1e6
 p2 = w*3*Ls2^2/2/1e6
-
-x1 = 0:50.:3*Ls1
-x2 = 0:50.:3*Ls2
+ps = [p1, p2]
+x1 = 0:500.:3*Ls1
+x2 = 0:500.:3*Ls2
 xs = [x1, x2]
 vds1 = [demands(x1[i], p1, Ls1)[1] for i in eachindex(x1)]
-mds1 = [demands(x1[i], p1, Ls1)[2] for i in eachindex(x1)]
+mds1 = [demands(x1[i], p1, Ls1)[2]/1000 for i in eachindex(x1)]
 
 vds2 = [demands(x2[i], p2, Ls2)[1] for i in eachindex(x2)]
-mds2 = [demands(x2[i], p2, Ls2)[2] for i in eachindex(x2)]
+mds2 = [demands(x2[i], p2, Ls2)[2]/1000 for i in eachindex(x2)]
 ecs = [0.8, 1.2]
 types = ["Beam", "Beam"]
 #create json. 
 data = []
 for i in 1:2
-    vds1 = [demands(xs[i][j], p1, Ls1)[1] for j in eachindex(xs[i])]
-    mds1 = [demands(xs[i][j], p1, Ls1)[2] for j in eachindex(xs[i])]
+    vds1 = [demands(xs[i][j], ps[i], Lss[i])[1] for j in eachindex(xs[i])]
+    mds1 = [demands(xs[i][j], ps[i], Lss[i])[2] for j in eachindex(xs[i])]/1000
     for j in eachindex(xs[i])
         tempj = Dict{String, Any}()
         tempj["pu"] = 100.0

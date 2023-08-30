@@ -5,7 +5,7 @@ Live load
     for office use = 2.4 kN/m2
     for Computer use = 4.79 kN/m2
     Corridors = 4.79 kN/m2
-***for residential
+****for residential
         Uninhabitable attics without storage 0.48
         Uninhabitable attics with storage 0.96
         Habitable attics and sleeping areas 1.44

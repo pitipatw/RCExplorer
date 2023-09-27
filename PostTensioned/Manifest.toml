@@ -2,7 +2,11 @@
 
 julia_version = "1.9.2"
 manifest_format = "2.0"
-project_hash = "fe5d641ba51f962bd8eace16b637146e6a37ee56"
+<<<<<<< HEAD
+project_hash = "cbb5afd9bed3d29fa1b4980d65084df002b23a53"
+=======
+project_hash = "ea4491856202bd3b1044aa3891225e5967ca82ad"
+>>>>>>> Beam
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -70,10 +74,19 @@ version = "7.4.11"
 [[deps.Artifacts]]
 uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
 
+<<<<<<< HEAD
+[[deps.AsapSections]]
+deps = ["LinearAlgebra"]
+git-tree-sha1 = "31d79e67cbdd0423552dcdb92d3a4410dd7498aa"
+repo-rev = "main"
+repo-url = "https://github.com/keithjlee/AsapSections"
+uuid = "acfe5cae-5356-4315-a967-d7096ea00a24"
+=======
 [[deps.AssetRegistry]]
 deps = ["Distributed", "JSON", "Pidfile", "SHA", "Test"]
 git-tree-sha1 = "b25e88db7944f98789130d7b503276bc34bc098e"
 uuid = "bf4720bc-e11a-5d0c-854e-bdca1663c893"
+>>>>>>> Beam
 version = "0.1.0"
 
 [[deps.Automa]]
@@ -96,6 +109,12 @@ version = "0.4.7"
 
 [[deps.Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
+
+[[deps.BenchmarkTools]]
+deps = ["JSON", "Logging", "Printf", "Profile", "Statistics", "UUIDs"]
+git-tree-sha1 = "d9a9701b899b30332bbcb3e1679c41cce81fb0e8"
+uuid = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+version = "1.3.2"
 
 [[deps.BitFlags]]
 git-tree-sha1 = "43b1a4a8f797c1cddadf60499a8a077d4af2cd2d"
@@ -1268,6 +1287,10 @@ version = "0.5.4"
 [[deps.Printf]]
 deps = ["Unicode"]
 uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
+
+[[deps.Profile]]
+deps = ["Printf"]
+uuid = "9abbd945-dff8-562f-b5e8-e1ebf5ef1b79"
 
 [[deps.ProgressMeter]]
 deps = ["Distributed", "Printf"]

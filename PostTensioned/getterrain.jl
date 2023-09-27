@@ -1,7 +1,8 @@
 using Dates
+using BenchmarkTools
 
 include("pixelgeo.jl")
-include("sectionproperties.jl")
+# include("sectionproperties.jl")
 include("ptFunc.jl")
 
 
@@ -21,6 +22,9 @@ include("ptFunc.jl")
 #            length(range_fpe) * length(range_ec) * (idx_as - 1) +
 #            length(range_fpe) * length(range_ec) * length(range_as) * (idx_fc′ - 1)
 # end
+"""
+Map n dimentional vector into an index.
+"""
 function map(n::Vector{Int64}, idx::Vector{Int64})
     d = Vector{Int64}(undef, length(n))
     for i in eachindex(n) 
@@ -40,26 +44,39 @@ function fc2e(fc′::Real)
 end
 
 
-function calcap(fc′, as, ec, fpe;
+function calcap(fc′, as, ec, fpe,L,t,Lc;
     # L = 102.5,
     # t = 17.5,
     # Lc = 15.,
-    L = 202.5,
-    t = 17.5,
-    Lc = 15.,
+    # L = 202.5,
+    # t = 17.5,
+    # Lc = 15.,
     Ep = 200_000,
     shear_ratio = 0.30,
     fR1 = 2.0,
     fR3 = 2.0 * 0.850)
+
     #Calculation starts here.
+
+    if T == "Beam"
+        section = make_Y_layup_section(L, t, Lc)
+        compoundsection = CompoundSection(section)
+        ac = section.area
+        # y, A = depth_map(compoundsection, 250)
+
+    elseif T == "Column"
+        section = make_X2_layup_section(L, t, Lc)
+        #also have to do x4, but will see.
+        compoundsection = CompoundSection(section)
+        ac = section.area
+        y, A = depth_map(compoundsection, 250)
+    else
+        println("Invalid type")
+        end
 
     #load section properties file
     # filename = "pixel_$L_$t_$Lc.csv"
     # section = CSV.read(filename, header=true)
-    d = 1.5*L
-
-    
-    ac = getprop(0.0,L,t,Lc) #get from the sectin properties
 
 
     #Pure Compression Capacity
@@ -87,7 +104,13 @@ function calcap(fc′, as, ec, fpe;
         println("Acomp exceeds Ac, using Ac instead")
         acomp = ac
     end
+
+
+    @show d = depth_from_area(section,acomp)
+
     depth, cgcomp= getprop(acomp, L, t, Lc)
+    clipped_section = sutherland_hodge(section::PolygonalSection, y::Float64; return_section = true)
+
     # mn_steel = as * fps * arm / 1e6 #[kNm]
 
     #Recheck with concrete.
@@ -110,8 +133,8 @@ function calcap(fc′, as, ec, fpe;
             ϵs_new = ϵc_new*(steelpos - depth) / depth
             fps_new = ϵs_new * Ep
 
-            @show acomp = as * fps_new / (0.85 * fc′)
-    
+            acomp = as * fps_new / (0.85 * fc′)
+            
             depth_new, cgcomp= getprop(acomp, L, t, Lc)
             tol = abs(depth_new - depth)/depth
             depth = depth_new
@@ -131,7 +154,7 @@ function calcap(fc′, as, ec, fpe;
 
 
     #Shear Calculation
-
+    d = L
     ashear = ac * shear_ratio
     fctk = 0.17*sqrt(fc′)
     ρs = as / ashear
@@ -173,7 +196,7 @@ function calcap(fc′, as, ec, fpe;
     return pu, mu, vu, embodied
 end
 
-function getterrain(; test=true)
+function getterrain(L,t,Lc; test=true)
     if !test
         range_fc′ = 28.:7.:56.
         range_as = [99.0, 140.0]
@@ -207,13 +230,11 @@ function getterrain(; test=true)
                     ec = range_ec[idx_ec]
                     fpe = range_fpe[idx_fpe]
 
-                    pu, mu, vu, embodied = calcap(fc′, as, ec, fpe)
+                    pu, mu, vu, embodied = calcap(fc′, as, ec, fpe, L, t, Lc)
                     idx_all = [idx_fc′, idx_as, idx_ec, idx_fpe]
 
                     idx = map(n,idx_all)
                     results[idx,:] = [fc′, as, ec, fpe, pu, mu, vu, embodied]
-
-
                 end
             end
         end
@@ -223,9 +244,11 @@ function getterrain(; test=true)
 end
 
 results = getterrain(test=false)
+# 11.147s , 575.72 MiB allocation
 date = Dates.today()
 time = Dates.now()
 CSV.write("results//output_$date.csv", DataFrame(results, :auto))
+
 
 
 # calcap(28., 99.0, 0.5, 1600.0)

@@ -36,6 +36,13 @@ function find_A_smin(fc′::Float64, b_w::Float64, d::Float64, f_y::Float64)
     return (3 * sqrt(fc′) * b_w * d) / f_y
 end
 
+function find_A_smin(c::ConcreteSection)
+    fc′ = c.fc′
+    w = c.w
+    d = c.h-50.0 #height - Covering
+    fy = c.rebars.fy[1] #let's get the first one for now. Usually we use the same fy
+    return (3 * sqrt(fc′) * w * d) / fy
+end
 
 """
 Equation to determine the depth of the compression stress block, a
@@ -44,6 +51,16 @@ This equation can be used to find A_s in 5-16
 function find_a(A_s, f_y, fc′, b)
     return (A_s * f_y) / (0.85 * fc′ * b)
 end
+
+function find_a(c::ConcreteSection)
+    as = sum(c.rebars.ast)
+    fy = c.rebars.fy[1]
+    fc′ = c.fc′
+    area = as*fy/(0.85*fc′)
+    section = c.geometry
+    return depth_from_area(section, area)
+end
+
 
 ### Clean this up!!!
 
@@ -54,16 +71,52 @@ return the rebar combination and the steel area
 function give_minimum_A_s_rebar_combination(A_s::Float64)
 
     # create a dictionary with index to bar area to allow easy execution of for loop
-    index_to_bar_area = Dict(1 => 0.11, 2 => 0.2, 3 => 0.31, 4 => 0.44, 5 => 0.6,
-        6 => 0.79, 7 => 1, 8 => 1.27, 9 => 1.56, 10 => 2.25, 11 => 4)
+    index_to_bar_area = Dict(
+                            1 => 0.11, 
+                            2 => 0.2,
+                            3 => 0.31, 
+                            4 => 0.44, 
+                            5 => 0.6,
+                            6 => 0.79, 
+                            7 => 1.0, 
+                            8 => 1.27,
+                            9 => 1.56,
+                            10 => 2.25,
+                            11 => 4,
+                            )
 
     # match the index to actual bar numbers
-    index_to_bar_num = Dict(1 => "No.3", 2 => "No.4", 3 => "No.5", 4 => "No.6", 5 => "No.7", 6 => "No.8",
-        7 => "No.9", 8 => "No.10", 9 => "No.11", 10 => "No.14", 11 => "No.18")
+    index_to_bar_num = Dict(
+                            1 => "No.3",
+                            2 => "No.4",
+                            3 => "No.5",
+                            4 => "No.6",
+                            5 => "No.7",
+                            6 => "No.8",
+                            7 => "No.9",
+                            8 => "No.10",
+                            9 => "No.11",
+                            10 => "No.14",
+                            11 => "No.18",
+                            )
 
     # first make a dictionary of using 1 bar only 
-    bar_combination_and_area = Dict("No.3" => 0.11, "No.4" => 0.2, "No.5" => 0.31, "No.6" => 0.44, "No.7" => 0.6,
-        "No.8" => 0.79, "No.9" => 1, "No.10" => 1.27, "No.11" => 1.56, "No.14" => 2.25, "No.18" => 4)
+    bar_combination_and_area = Dict(
+                            "No.3" => 0.11, 
+                            "No.4" => 0.2, 
+                            "No.5" => 0.31,
+                            "No.6" => 0.44, 
+                            "No.7" => 0.6,
+                            "No.8" => 0.79,
+                            "No.9" => 1,
+                            "No.10" => 1.27,
+                            "No.11" => 1.56, 
+                            "No.14" => 2.25, 
+                            "No.18" => 4,
+                            )
+
+    @assert length(index_to_bar_num) == length(index_to_bar_area)
+    @assert length(index_to_bar_num) == length(bar_combination_and_area)
 
     # add the two same bars combination into the dictionary above
     # doesn't need to calculate all combinations because the reinforcement needs to be symmetry
@@ -82,9 +135,12 @@ function give_minimum_A_s_rebar_combination(A_s::Float64)
         end
     end
 
+    
+    #precalc.
     A_s_final = 0.0
     bar_size = "No.0"
     smallest_diff_btwn_required_A_s_and_combination_A_s = 99999
+
     for (BarSize, ComboArea) in bar_combination_and_area
         current_diff = ComboArea - A_s
         if current_diff < smallest_diff_btwn_required_A_s_and_combination_A_s && current_diff > 0
@@ -101,18 +157,51 @@ input the calculated A_s value and give all possible rebar combination
 return the rebar combination and the steel area
 """
 function give_all_possible_A_s_rebar_combination(A_s::Float64)
-
+##repak
     # create a dictionary with index to bar area to allow easy execution of for loop
-    index_to_bar_area = Dict(1 => 0.11, 2 => 0.2, 3 => 0.31, 4 => 0.44, 5 => 0.6,
-        6 => 0.79, 7 => 1, 8 => 1.27, 9 => 1.56, 10 => 2.25, 11 => 4)
+    index_to_bar_area = Dict(
+                            1 => 0.11,
+                            2 => 0.2,
+                            3 => 0.31,
+                            4 => 0.44, 
+                            5 => 0.6,
+                            6 => 0.79,
+                            7 => 1,
+                            8 => 1.27,
+                            9 => 1.56,
+                            10 => 2.25,
+                            11 => 4
+                            )
 
     # match the index to actual bar numbers
-    index_to_bar_num = Dict(1 => "No.3", 2 => "No.4", 3 => "No.5", 4 => "No.6", 5 => "No.7", 6 => "No.8",
-        7 => "No.9", 8 => "No.10", 9 => "No.11", 10 => "No.14", 11 => "No.18")
+    index_to_bar_num = Dict(
+                            1 => "No.3",
+                            2 => "No.4",
+                            3 => "No.5",
+                            4 => "No.6",
+                            5 => "No.7",
+                            6 => "No.8",
+                            7 => "No.9",
+                            8 => "No.10",
+                            9 => "No.11", 
+                            10 => "No.14",
+                            11 => "No.18"
+                            )
 
     # first make a dictionary of using 1 bar only 
-    bar_combination_and_area = Dict("No.3" => 0.11, "No.4" => 0.2, "No.5" => 0.31, "No.6" => 0.44, "No.7" => 0.6,
-        "No.8" => 0.79, "No.9" => 1, "No.10" => 1.27, "No.11" => 1.56, "No.14" => 2.25, "No.18" => 4)
+    bar_combination_and_area = Dict(
+                                "No.3" => 0.11,
+                                "No.4" => 0.2,
+                                "No.5" => 0.31,
+                                "No.6" => 0.44,
+                                "No.7" => 0.6,
+                                "No.8" => 0.79,
+                                "No.9" => 1, 
+                                "No.10" => 1.27,
+                                "No.11" => 1.56,
+                                "No.14" => 2.25, 
+                                "No.18" => 4
+                                )
 
     # add the two same bars combination into the dictionary above
     # doesn't need to calculate all combinations because the reinforcement needs to be symmetry
@@ -143,6 +232,7 @@ function give_all_possible_A_s_rebar_combination(A_s::Float64)
     end
     # println(all_bar_size_combo_bigger_than_input_A_s_list)
     return all_A_s_combo_bigger_than_input_A_s_list
+    #return all_A_s_combo_bigger_than_input_A_s_list, all_bar_size_combo_bigger_than_input_A_s_list
 end
 
 
@@ -158,11 +248,21 @@ function find_P0(fc′::Number, Ag::Float64, Ast::Float64, fy::Float64)
     return 0.85 * (fc′ * (Ag - Ast)) + (fy * Ast)
 end
 
+function findPn(c::ConcreteSection)
+    return 0.85 * (c.fc′ * (c.ag - sum(c.rebars.ast))) + sum(c.rebar.fy .* c.rebar.ast)
+end
+
 """
 Nominal Moment Capacity
 """
 function find_Mn(A_s, f_y, d, a)
     return A_s * f_y * (d - (a / 2))
+end
+
+function find_Mn(c::ConcreteSection)
+    #calculate a 
+    println("Calc a (compression depth) please")
+    return sum(c.rebar.as .* c.rebar.fy .* (c.rebar.d .- (a/2)))
 end
 
 """
@@ -171,6 +271,14 @@ Shear Capacity
 function find_shear_capacity()
     return phi * V_n
 end
+
+function find_Vn(c)
+    #assume stirrup spacing_between_beam
+
+    return 0.0
+
+end
+
 
 
 """
@@ -208,6 +316,7 @@ or Section 5, page 190 of RC Mechanics and Design 6th textbook
 function find_I_g(b, h)
     return (b * h^3) / 12
 end
+
 
 """
 Find the gross Inertia for a T section

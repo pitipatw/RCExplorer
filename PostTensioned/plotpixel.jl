@@ -1,97 +1,58 @@
 using Makie, GLMakie
+using AsapSections
 
 include("pixelgeo.jl")
-dx = 0.1
-dy = 0.1
-# dx = 0.05
-# dy = 0.05
-dxdy = dx * dy
 
 
+function plotpixel(L::Float64, t::Float64, Lc::Float64)
 
-L = 300.0
-t = 30.0
-Lc = 30.0
-Acomp = 1000.0
-CompDepth = 20.8
-nodes = fullpixel(L, t, Lc)
-y_top = maximum(nodes[:, 2])
-# f4 = Figure(resolution = (800, 800))
-# ax4 = Axis(f4[1, 1], xlabel = "x", ylabel = "y", aspect = DataAspect())#, aspect = DataAspect(), xgrid = false, ygrid = false)
-# scatter!(ax4, nodes[:,1],nodes[:,2], color = :red )
-# f4
+# L = 300.0
+# t = 30.0
+# Lc = 30.0
 
+section1 = make_Y_layup_section(L, t, Lc)
+section2 = make_X2_layup_section(L, t, Lc)
+section3 = make_X4_layup_section(L, t, Lc)
 
-points = fillpoints(nodes, dx, dy)
-
-check = pointsinpixel(nodes, points)
-
-f1 = Figure(resolution = (800, 800))
-ax1 = Axis(f1[1, 1], xlabel = "x", ylabel = "y", aspect = DataAspect())#, aspect = DataAspect(), xgrid = false, ygrid = false)
-p1 = scatter!(ax1, points[check[:,1],1],points[check[:,1],2], color = :green )
-f1
+f1= Figure(resolution = (800,800))
+ax1 = Axis(f1[1,1], xlabel = "x", ylabel = "y", aspect = DataAspect(), limits = (-1, 1 , -1, 1).*1.05.*L)
+ax2 = Axis(f1[1,2], xlabel = "x", ylabel = "y", aspect = DataAspect(), limits = (-1, 1 , -1, 1).*1.05.*L)
+ax3 = Axis(f1[2,1], xlabel = "x", ylabel = "y", aspect = DataAspect(), limits = (-1, 1 , -1, 1).*1.05.*L)
 
 
+plotsection(ax, section) = [scatter!(ax, section[i].points) for i in eachindex(section)]
+plotsection(ax1, section1)
+plotsection(ax2, section2)
+plotsection(ax3,section3)
 
-p_inpoly = points[check, :];
-top = maximum(p_inpoly[:, 2]);
-area = dx * dy * size(p_inpoly)[1];
-println("area: ", area);
+    return f1
 
-chk = Vector{Bool}(undef, size(p_inpoly)[1]);
-c_pos = top - CompDepth;
-# @time for i =1:size(p_inpoly)[1]
-#     x = p_inpoly[i,1]
-#     y = p_inpoly[i,2]
-#     if y>c_pos
-#         chk[i] = true
-#     else
-#         chk[i] = false
-#     end
-# end
-#Threads really helps the time by 4 times
-Threads.@threads for i = 1:size(p_inpoly)[1]
-    # x = p_inpoly[i,1]
-    y = p_inpoly[i, 2]
-    if y > c_pos
-        chk[i] = true
-    else
-        chk[i] = false
-    end
 end
 
-com_pts = p_inpoly[chk, :];
+# plotpixel(200., 30.,10.)
 
-# f3 = Figure(resolution = (800,600))
-# ax3 = Axis(f3[1,1,] , xlabel = "x", ylabel = "y", aspect = DataAspect())
-# p3 = scatter!(ax3, p_inpoly[:,1], p_inpoly[:,2], color = :red, markersize = 2)
-# f3
-# p4 = scatter!(ax3, com_pts[:,1], com_pts[:,2], color = :green, markersize = 1)
-# f3
+# function mappixel
+y, A = depth_map(compoundsection1, 250)
+
+# end
 
 
+compoundsection1 = CompoundSection(section1)
+compoundsection2 = CompoundSection(section2)
+compoundsection3 = CompoundSection(section3)
 
-# a function that calculates the center of gravity and inertia of a given polygon respected to a line.
+compoundsection1.area
+compoundsection2.area
+compoundsection3.area
 
-c_pos = 0.0; #this is not the depth, center
-eval_pts = points[check, :];
-# f3 = Figure(resolution = (800,600))
-# ax3 = Axis(f3[1,1], xlabel = "x", ylabel = "y", aspect = DataAspect())
-# ax4 = Axis(f3[1,2], xlabel = "x", ylabel = "y", aspect = DataAspect())
-# p3 = scatter!(ax3, points[:,1], points[:,2], color = :red, markersize = 2)
-# p4 = scatter!(ax4, eval_pts[:,1], eval_pts[:,2], color = :blue, markersize = 2)
-# f3
+Arequired = 20000.
+d_at_A = depth_from_area(compoundsection1, Arequired)
 
-(I, cgy) = secprop(eval_pts, c_pos, dx=dx, dy=dy);
-println("I: ", I);
-println("cgy: ", cgy);
+A_at_d = area_from_depth(section1, d)
 
-Area = size(p_inpoly)[1] * dxdy;
+# clipped_vertices = sutherland_hodge(section::PolygonalSection, y::Float64)
+# clipped_section = sutherland_hodge(section::PolygonalSection, y::Float64; return_section = true)
 
+# clipped_section = AsapSections.sutherland_hodgman(compoundsection1, d_at_A; return_section = true)
 
-(depth, chkd) = getdepth(p_inpoly, Acomp, nodes,tol = 0.005);
-println("Depth is: ", depth)
-
-compnodes = p_inpoly[chkd,:];
-@show Ic, cgyc = secprop(compnodes, 0.0)
-@show IcNA , cgyc2 = secprop(compnodes, cgyc)
+# clipped_vertices = sutherland_hodge(compoundsection1, d_at_A)

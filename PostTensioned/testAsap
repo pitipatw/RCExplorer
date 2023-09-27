@@ -1,0 +1,32 @@
+using AsapSections
+
+L = 300.
+t = 20.
+Lc = 30.
+
+section = make_Y_layup_section(L, t, Lc)
+compoundsection = CompoundSection(section)
+ac = compoundsection.area
+
+# get depth where area is half of ac.
+Y,A = depth_map(compoundsection)
+Y[1] - Y[end]
+
+y = depth_from_area(compoundsection, 1.)
+y = depth_from_area(compoundsection, ac/2)
+y = depth_from_area(compoundsection, ac/4)
+
+y = depth_from_area(section[1], ac/4.)
+AsapSections.area_from_depth_abs(compoundsection, y)
+clipped_section = sutherland_hodgman(section[2], y; return_section = true)
+
+y, A = depth_map(compoundsection, 250)
+
+compoundsection.centroid
+compoundsection.ymax
+compoundsection.ymin
+
+
+area_from_depth(compoundsection,0.0)
+
+sutherland_hodgman(section[1], 250.0)

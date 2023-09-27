@@ -15,7 +15,8 @@ cin format
 fc', as, ec, fpe, pu, mu, vu, embodied
 """
 
-# @time cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
+
+cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
 #HTTP connection
 function main(cin)
     #initialize the server
@@ -49,7 +50,7 @@ function main(cin)
                     pu = parse(Float64,data[i]["pu"])
                     mu = parse(Float64,data[i]["mu"])
                     vu = parse(Float64,data[i]["vu"])
-                    ec_max = data[i]["ec_max"]
+                    ec_max = parse(Float64,data[i]["ec_max"])
                     
                     # @show repeat([pu, mu, vu], outer = (1,nc))'
                     if data[i]["t"] == "Beam"

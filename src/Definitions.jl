@@ -1,6 +1,6 @@
 #Defines structs
-
-
+using ASAPsection
+#do I always need 
 mutable struct RebarSection
     ast::Vector{Float64}
     # asc::Vector{Float64} #compression steel
@@ -11,17 +11,6 @@ mutable struct RebarSection
     gwp::Vector{Float64} #probably constant
 end
 
-@kwdef mutable struct ConcreteSection
-    fc′ ::Float64
-    ag::Float64
-    rebars::RebarSection
-    E::Float64 = 4700sqrt(fc′)
-    gwp::Float64 #could be a function of fc′ (from CLF)
-
-    a::Float64
-    c::Float64
-end
-
 function fc′_to_gwp(fc′)
     #load the function, maybe precalc into an equation and put it in here
     # (dummy) gwp = 0.001 * fc′ + 0.002 *fc′^2
@@ -29,13 +18,16 @@ function fc′_to_gwp(fc′)
     return gwp
 end
 
-function ConcreteSection(fc′::Float64, A::Float64, Rebars::RebarSection)
-    E = 4700*sqrt(fc′)
-    gwp = fc′_to_gwp(fc′)
-    println("Warning, a and c still 0")
-    ConcreteSection(fc′::Float64, A::Float64, Rebars::RebarSection, E::Float64, gwp::Float64, 0.0,0.0)
+@kwdef mutable struct ConcreteSection
+    fc′::Float64
+    E::Float64 = 4700*sqrt(fc′)
+    gwp::Float64 = fc′_to_gwp(fc′) #could be a function of fc′ (from CLF)
+    geometry::PolygonalSection
+    rebars::RebarSection
+    # ec::Float64 = gwp*(geometry.area - rebar.totalarea) + rebar.totalarea.rebar.gwp
+    #still in decision to embed them inside ConcreteSection or not.
+    # P::Float64 = 0.0
+    # M::Float64 = 0.0
+    # V::Float64 = 0.0
 end
-r = RebarSection([1.],[2.],[3.],[4.],[1.5],[1.5])
-c = ConcreteSection(10.,20.,r)
 
-c.E

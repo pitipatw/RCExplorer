@@ -36,6 +36,13 @@ function find_A_smin(fc′::Float64, b_w::Float64, d::Float64, f_y::Float64)
     return (3 * sqrt(fc′) * b_w * d) / f_y
 end
 
+function find_A_smin(c::ConcreteSection)
+    fc′ = c.fc′
+    w = c.w
+    d = c.h-50.0 #height - Covering
+    fy = c.rebars.fy[1] #let's get the first one for now. Usually we use the same fy
+    return (3 * sqrt(fc′) * w * d) / fy
+end
 
 """
 Equation to determine the depth of the compression stress block, a
@@ -44,6 +51,16 @@ This equation can be used to find A_s in 5-16
 function find_a(A_s, f_y, fc′, b)
     return (A_s * f_y) / (0.85 * fc′ * b)
 end
+
+function find_a(c::ConcreteSection)
+    as = sum(c.rebars.ast)
+    fy = c.rebars.fy[1]
+    fc′ = c.fc′
+    area = as*fy/(0.85*fc′)
+    section = c.geometry
+    return depth_from_area(section, area)
+end
+
 
 ### Clean this up!!!
 
@@ -231,7 +248,7 @@ function find_P0(fc′::Number, Ag::Float64, Ast::Float64, fy::Float64)
     return 0.85 * (fc′ * (Ag - Ast)) + (fy * Ast)
 end
 
-function findP0(c::ConcreteSection)
+function findPn(c::ConcreteSection)
     return 0.85 * (c.fc′ * (c.ag - sum(c.rebars.ast))) + sum(c.rebar.fy .* c.rebar.ast)
 end
 
@@ -242,7 +259,9 @@ function find_Mn(A_s, f_y, d, a)
     return A_s * f_y * (d - (a / 2))
 end
 
-function find_Mn(c::ConcreteSection , a::Float64)
+function find_Mn(c::ConcreteSection)
+    #calculate a 
+    println("Calc a (compression depth) please")
     return sum(c.rebar.as .* c.rebar.fy .* (c.rebar.d .- (a/2)))
 end
 
@@ -252,6 +271,14 @@ Shear Capacity
 function find_shear_capacity()
     return phi * V_n
 end
+
+function find_Vn(c)
+    #assume stirrup spacing_between_beam
+
+    return 0.0
+
+end
+
 
 
 """

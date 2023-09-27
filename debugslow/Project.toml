@@ -1,7 +1,0 @@
-[deps]
-GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
-GeometricalPredicates = "fd0ad045-b25c-564e-8f9c-8ef5c5f21267"
-GeometryTypes = "4d00f742-c7ba-57c2-abde-4428a4b178cb"
-Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
-PolygonInbounds = "e4521ec6-8c1d-418e-9da2-b3bc4ae105d6"
-StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"

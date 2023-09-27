@@ -15,12 +15,11 @@ cin format
 fc', as, ec, fpe, pu, mu, vu, embodied
 """
 
-
 cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
 #HTTP connection
 function main(cin)
     #initialize the server
-    # try
+    #try
         server = WebSockets.listen!("127.0.0.1", 2000) do ws
             for msg in ws
                 println("Hello World")
@@ -37,15 +36,19 @@ function main(cin)
                 #load the data terrain
 
                 #goes in a loop
-                ns = length(data)
+                ns = length(data) #each section
                 ne = 20 #somehow get the number of elements
                 # nc = 4 #number of available choices
                 nc = size(cin,1)
                 global outr = Vector{Matrix{Float64}}()
                 # for si = 1:ns
                 for i = 1:ns
+                    #load the right section data
                     # c1 = Vector{Float64}(undef, ns)
                     # c2 = Vector{Float64}(undef, ne)
+                    L = parse(Float64,data[i]["L"])
+                    t = parse(Float64,data[i]["t"])
+                    Lc = parse(Float64,data[i]["Lc"])
 
                     pu = parse(Float64,data[i]["pu"])
                     mu = parse(Float64,data[i]["mu"])
@@ -54,8 +57,10 @@ function main(cin)
                     
                     # @show repeat([pu, mu, vu], outer = (1,nc))'
                     if data[i]["t"] == "Beam"
-                        #calculate section with 3 pieces
+                        #calculate/load section with 3 pieces
                         #have to add 
+                        cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
+
                         np = 3
                         #load csv with np suffix
 

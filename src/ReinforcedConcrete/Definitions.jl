@@ -18,7 +18,7 @@ end
 function fc′_to_gwp(fc′)
     #load the function, maybe precalc into an equation and put it in here
     # (dummy) gwp = 0.001 * fc′ + 0.002 *fc′^2
-    gwp = 0.14 #placeholder.
+    gwp = 0.0012*fc′+0.07
     return gwp
 end
 
@@ -38,9 +38,11 @@ end
 
 #function for defining ConcreteSection
 function ConcreteSection(fc′::Float64, section::AsapSections.PolygonalSection, rebars::RebarSection)
+    section_gwp = fc′_to_gwp(fc′)*(section.area - sum(rebars.ast)) + sum(rebars.ast .* rebars.gwp)     
+    section_gwp = section_gwp/1e6*2400
     return ConcreteSection(fc′,
                            4700*sqrt(fc′),
-                           fc′_to_gwp(fc′),
+                           section_gwp,
                            section,
                            rebars
                            )

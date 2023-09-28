@@ -1,5 +1,6 @@
 # module Catalog
 #design catalog
+using DataFrames
 include("Definitions.jl")
 include("Rebars/Rebars.jl")
 include("RcCapacities.jl")
@@ -13,14 +14,20 @@ end
 # end
 
 function get_catalog(bar_combinations)
-    fc′s = 28.:2.:56.
-    widths = 100.:20.:500.
-    heights = 100.:20.:500.
+    fc′s = 28.:10.:56.
+    widths = 100.:200.:500.
+    heights = 100.:200.:500.
     rebars = bar_combinations  #get from Hazel's work
     fy = 420.0
     covering = 40. #ACI318M-19 Table 20.5.1.3.1, Not exposed to weather or in contact with ground
 
     catalog = Dict()
+    Cs = Vector{ConcreteSection}()
+    Ps = Vector{Float64}()
+    Ms = Vector{Float64}()
+    GWPs = Vector{Float64}()
+
+    
     count = 0 
     for fc′ in fc′s
         for w in widths
@@ -56,6 +63,7 @@ function get_catalog(bar_combinations)
                     as_min_check = sum(areas) < as_min
 
                     if !spacing_check || !as_min_check 
+                        # println("FAIL")
                         continue
                     else
                         # create rebar section
@@ -68,10 +76,13 @@ function get_catalog(bar_combinations)
                         #Create a concrete section here.
                         c = ConcreteSection(fc′, section, rebars)
                         #Calculate the capacity.
-                        P = 10 #find_Pn(c)
-                        M = 20 #find_Mu(c)
+                        P = find_Pu(c)
+                        M = find_Mu(c)
                         # V = find_Vn(c)
-                        push!(catalog , count => [c,P,M])
+                        push!(Cs,c)
+                        push!(Ps,P)
+                        push!(Ms,M)
+                        push!(GWPs, c.gwp)
                     end
                 end
             end
@@ -80,12 +91,13 @@ function get_catalog(bar_combinations)
 
 
     # after got all of the catalog, compared them 
+    catalog = DataFrame(id = 1:count, Section = Cs, Pu=Ps, Mu= Ms, Gwp = GWPs)
     println("Done catalog")
     return catalog
 end
 
 # end
-get_catalog(bar_combinations)
+catalog = get_catalog(bar_combinations);
 # catalog = Catalog.main()
 
 #now, we need section from karamba. 

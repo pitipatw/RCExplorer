@@ -12,6 +12,8 @@ function find_Mu(c::ConcreteSection)
     return 0.9*sum(c.rebar.as .* c.rebar.fy .* (c.rebar.d .- (a/2)))
 end
 
-function find_Vu(c::ConcreteSectin)
-    return 0
+function find_Vu(c::ConcreteSection)
+    println("Working in progress")
+    @assert 1 = 2
+    return 0.0
 end

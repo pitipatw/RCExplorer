@@ -1,4 +1,4 @@
-module Catalog
+# module Catalog
 #design catalog
 include("Definitions.jl")
 include("Rebars.jl")
@@ -9,7 +9,7 @@ end
 
 
 
-function main()
+function get_catalog()
 
 widths = 100.:20.:500.
 heights = 100.:20.:500.
@@ -71,7 +71,7 @@ println("Done catalog")
 return catalogs
 end
 
-end
+# end
 
 # catalog = Catalog.main()
 

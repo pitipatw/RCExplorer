@@ -1,78 +1,91 @@
 # module Catalog
 #design catalog
 include("Definitions.jl")
-include("Rebars.jl")
-include("Capacities.jl")
-function circle_pts(r::Float64; n = 50, base = [0. , 0.])
-    return [r .* [cos(thet), sin(thet)] .+ base for thet in range(0, 2pi, n)]
+include("Rebars/Rebars.jl")
+include("RcCapacities.jl")
+
+function find_A_smin(fc′::Real, b_w::Float64, d::Float64, f_y::Float64)
+    return (3 * sqrt(fc′) * b_w * d) / f_y
 end
 
+# function circle_pts(r::Float64; n = 50, base = [0. , 0.])
+#     return [r .* [cos(thet), sin(thet)] .+ base for thet in range(0, 2pi, n)]
+# end
+
+function get_catalog(bar_combinations)
+    fc′s = 28.:2.:56.
+    widths = 100.:20.:500.
+    heights = 100.:20.:500.
+    rebars = bar_combinations  #get from Hazel's work
+    fy = 420.0
+    covering = 40. #ACI318M-19 Table 20.5.1.3.1, Not exposed to weather or in contact with ground
+
+    catalog = Dict()
+    count = 0 
+    for fc′ in fc′s
+        for w in widths
+            for h in heights
+                #rectangular section
+                # p1.....p2
+                # .      .
+                # .      .
+                # .      .
+                # p4.....p3
+            
+                p1 = [0. , 0.]
+                p2 = [w , 0.]
+                p3 = [w, -h]
+                p4 = [0., -h]
+                pts = [p1,p2,p3,p4]
+                section = SolidSection(pts)
 
 
-function get_catalog()
+                #Rebars will be single layer, 50mm up from the bottom
+                #y = -h + 50 [mm]
+                for (k,r_idx) in map
+                    # println(typeof(r_idx))
+                    # println(bar_combinations)
+                    areas = bar_combinations[r_idx]
+                    ds = parse.(Float64,split(map[k],"_")) #vector of diameters
+                    #spacing check
+                    nr = length(ds) #number of rebars
+                    spacing_check = w > ( 2*covering + sum(ds) + (nr-1)*maximum([40, 1.5*maximum(ds)]) )
+                    
+                    #minimum rebar check
+                    as_min = find_A_smin(fc′, w, h-covering, fy)
+                    as_min_check = sum(areas) < as_min
 
-widths = 100.:20.:500.
-heights = 100.:20.:500.
-rebars = bar_combination_and_area #get from Hazel's work
-fy = 200_000
-dc = 50 # Covering [mm]
+                    if !spacing_check || !as_min_check 
+                        continue
+                    else
+                        # create rebar section
+                        count = count +1 
+                        xs = repeat([0.0], nr)
+                        ys = repeat([-h + covering], nr)
+                        fys = repeat([fy], nr)
+                        rebars = RebarSection(areas, fys, xs, ys, ds)
 
-catalogs = Dict()
-count = 0 
-for w in widths
-    for h in heights
-        #rectangular section
-    
-        # p1.....p2
-        # .      .
-        # .      .
-        # .      .
-        # p4.....p3
-    
-        p1 = [0. , 0.],
-        p2 = [w , 0.],
-        p3 = [w, -h],
-        p4 = [0., -h]
-        pts = [p1,p2,p3,p4]
-        section = SolidSection(pts)
-
-        #steel is Hazel's steel comp
-        for (r, area) in rebars
-            nr = 1 #find the number of rebars sum of number between []
-            rebar = RebarSection(rebars[r], repeat([fy], nr),repeat([0], nr),repeat([-h+dc], nr),repeat([1.99], nr))
-            #check if this r fits in the given width.
-            spacing_check = true
-            as_min = find_A_smin(c)
-            as_min_check = sum(rebar.ast) < as_min
-
-            if !spacing_check || !as_min_check 
-                continue
-            else
-            count = count+1 
-            #create a concrete section 
-            #start with section geometry using all_A_s_combo_bigger_than_input_A_s_list
-            geometry = 0 #something by ASAP 
-            #concrete section c 
-
-            c = 0 #ConcreteSection
-            #Calculate the capacity.
-            P = find_Pn(c)
-            M = find_Mu(c)
-            # V = find_Vn(c)
-            push!(count , [c,P,M,V])
+                        #Create a concrete section here.
+                        c = ConcreteSection(fc′, section, rebars)
+                        #Calculate the capacity.
+                        P = 10 #find_Pn(c)
+                        M = 20 #find_Mu(c)
+                        # V = find_Vn(c)
+                        push!(catalog , count => [c,P,M])
+                    end
+                end
             end
         end
     end
-end
 
 
-# after got all of the catalog, compared them 
-println("Done catalog")
-return catalogs
+    # after got all of the catalog, compared them 
+    println("Done catalog")
+    return catalog
 end
 
 # end
-
+get_catalog(bar_combinations)
 # catalog = Catalog.main()
 
 #now, we need section from karamba. 

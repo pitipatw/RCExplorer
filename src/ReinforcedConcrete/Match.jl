@@ -37,32 +37,34 @@ for d_idx in eachindex(demands)
     designs[d_idx] = copy(design_i)
 end
 
+#box plot to visualize the design for each section.
+
 #select the best design
 
-sort each design by gwp from low to high, and get the first one (lowest)\
-design
-gwpi = catalog[ design[i to n]] 
-sort by gwp.
+# sort each design by gwp from low to high, and get the first one (lowest)\
+# design
+# gwpi = catalog[ design[i to n]] 
+# sort by gwp.
 
-select gwpi[1]
+# select gwpi[1]
 
 
-output designs_opt = Dict{Int64,Int64}
-have to work with the catalog.
-#
+# output designs_opt = Dict{Int64,Int64}
+# have to work with the catalog.
+# #
 
-visualize.
-plot by section?  needs to know section information 
-what section number maps to what elements. 
-We can do 1 section for the whole beam. 
+# visualize.
+# plot by section?  needs to know section information 
+# what section number maps to what elements. 
+# We can do 1 section for the whole beam. 
 
-###########
+# ###########
 
-fc′_range = [28.0 , 35.0] # or [28.0, 28.0] if you only want 28 MPa.
-# this should show how having a choie is better or not.
-loop designs
-for each one, get fc′ in the range. 
+# fc′_range = [28.0 , 35.0] # or [28.0, 28.0] if you only want 28 MPa.
+# # this should show how having a choie is better or not.
+# loop designs
+# for each one, get fc′ in the range. 
 
-    still select the least ec. 
+#     still select the least ec. 
 
 

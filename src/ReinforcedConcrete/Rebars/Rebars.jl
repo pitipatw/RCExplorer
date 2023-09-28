@@ -36,7 +36,7 @@ function get_combinations(standard_sizes::Dict{String,Float64})
             end
         end
     end
-    map = Dict(1:length(bar_combinations) .=> collect(keys(bar_combinations)))
+    map = Dict(1:length(combinations) .=> collect(keys(combinations)))
     # @assert length(combinations) == n + n + factorial(n)/factorial(n-2) + factorial(n)/factorial(n-2)/2
     return combinations, map
 end

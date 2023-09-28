@@ -63,4 +63,7 @@ function ParplotCatalog(df)
     return myplot
 end
 
-ParplotCatalog(catalog)
+
+open("./parallel.html", "w") do io
+    PlotlyBase.to_html(io, ParplotCatalog(catalog).plot)
+end

@@ -15,6 +15,8 @@ function get_catalog(bar_combinations)
     widths = 200.:100.:500.
     heights = 200.:100.:500.
     rebars = bar_combinations  #get from Hazel's work
+    rebars = bar_combinations  #get from Hazel's work
+
     fy = 420.0
     covering = 40. #ACI318M-19 Table 20.5.1.3.1, Not exposed to weather or in contact with ground
 

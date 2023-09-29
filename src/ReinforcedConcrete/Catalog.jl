@@ -11,7 +11,7 @@ end
 
 
 function get_catalog(bar_combinations)
-    fc′s = 28.:10.:56.
+    fc′s = 25.:10.:55.
     widths = 200.:100.:500.
     heights = 200.:100.:500.
     rebars = bar_combinations  #get from Hazel's work
@@ -111,7 +111,7 @@ function get_catalog(bar_combinations)
 
 
     # after got all of the catalog, compared them 
-    catalog = DataFrame(id = 1:count, Section = Cs, Pu=Ps, Mu= Ms, Gwp = GWPs)
+    catalog = DataFrame(id = 1:count, Section = Cs, Pu=Ps, Mu= Ms, Gwp = GWPs, Section_ID = Section_IDs)
     println("Done catalog")
     return catalog
 end

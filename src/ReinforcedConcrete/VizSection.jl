@@ -3,7 +3,7 @@ using kjlMakie
 set_theme!(kjl_light)
 
 function VizCatalog(catalog)
-for s in 1:size(catalog)[1]
+for s in 1:10#size(catalog)[1]
     # c is a concrete section 
     c = catalog[s, :Section]
     figure1 = Figure(resolution=(600, 600))

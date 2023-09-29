@@ -24,7 +24,7 @@ function get_combinations(standard_sizes::Dict{String,Float64})
     #tripple bars (aaa, abb)
     for (k1,v1) in standard_sizes
         for (k2,v2) in standard_sizes
-            push!(combinations, k1*"_"*k2*"_"*k2 => [v1,v2,v2])
+            push!(combinations, k2*"_"*k1*"_"*k2 => [v2,v1,v2])
         end
     end
 
@@ -32,7 +32,7 @@ function get_combinations(standard_sizes::Dict{String,Float64})
     for (k1,v1) in standard_sizes
         for (k2,v2) in standard_sizes
             if k2*"_"*k2*"_"*k1*"_"*k1 ∉ keys(combinations)
-                push!(combinations, k1*"_"*k1*"_"*k2*"_"*k2 => [v1,v1,v2,v2])
+                push!(combinations, k2*"_"*k1*"_"*k1*"_"*k2 => [v2,v1,v1,v2])
             end
         end
     end

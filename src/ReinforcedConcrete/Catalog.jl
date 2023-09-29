@@ -77,6 +77,10 @@ function get_catalog(bar_combinations)
                         elseif length(ds) == 2
                             offset = covering + ds[1]/2
                             xs = [offset, w-offset]
+                        elseif length(ds) == 3 
+                            offset = covering + ds[1]/2
+                            xs = [offset, w/2, w-offset]
+
                         else
                         #in case there are more, 
                             xs = [covering + ds[1]/2]

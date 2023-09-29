@@ -6,16 +6,20 @@ function VizCatalog(catalog)
 for s in 1:10#size(catalog)[1]
     # c is a concrete section 
     c = catalog[s, :Section]
+    section_ID = catalog[s, :Section_ID]
+    rebar_section = getfield.(catalog[s,:Section],rebars) , 
     figure1 = Figure(resolution=(600, 600))
     xl = -25
     xu = 550
     yl = -550
     yu = 20
-    ax1 = Axis(figure1[1, 1], title="Section",
+    ax1 = Axis(figure1[1, 1],# title="Section",
         aspect=DataAspect(),
         xticks=xl:50:xu, yticks=yl:50:yu,
         limits=(xl, xu, yl, yu))
-
+    Label(figure1[1, 1, Top()], "Concrete section $section_ID\n Rebar section", valign = :bottom,
+    font = :bold, fontsize = 30,
+    padding = (0, 0, 5, 0))
     #plot section outline from AsapSections
     pts = c.geometry.points'
     #concate the first point to create a closed loop line

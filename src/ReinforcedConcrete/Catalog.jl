@@ -12,8 +12,8 @@ end
 
 function get_catalog(bar_combinations)
     fc′s = 28.:10.:56.
-    widths = 100.:200.:500.
-    heights = 100.:200.:500.
+    widths = 200.:100.:500.
+    heights = 200.:100.:500.
     rebars = bar_combinations  #get from Hazel's work
     fy = 420.0
     covering = 40. #ACI318M-19 Table 20.5.1.3.1, Not exposed to weather or in contact with ground
@@ -23,12 +23,15 @@ function get_catalog(bar_combinations)
     Ps = Vector{Float64}()
     Ms = Vector{Float64}()
     GWPs = Vector{Float64}()
+    Section_IDs = Vector{Int64}()
 
-    
+    section_ID = 0
     count = 0 
-    for fc′ in fc′s
-        for w in widths
-            for h in heights
+    
+    for w in widths
+        for h in heights
+            section_ID = section_ID + 1
+            for fc′ in fc′s
                 #rectangular section
                 # p1.....p2
                 # .      .
@@ -99,6 +102,7 @@ function get_catalog(bar_combinations)
                         push!(Ps,P)
                         push!(Ms,M)
                         push!(GWPs, c.gwp)
+                        push!(Section_IDs, section_ID)
                     end
                 end
             end

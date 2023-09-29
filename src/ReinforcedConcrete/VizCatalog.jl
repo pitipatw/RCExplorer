@@ -12,7 +12,7 @@ function VizCatalog(catalog)
 
 
     ax2 = Axis(figure1[1,2],
-    xlabel = "Mu [N]", ylabel = "GWP [kgCO2e/kg]")
+    xlabel = "Mu [Nm]", ylabel = "GWP [kgCO2e/kg]")
     fc′s = getfield.(catalog[!,:Section], :fc′)
     s2 = scatter!(ax2, catalog[!, :Mu]/1000, catalog[!, :Gwp], color = fc′s )
 
@@ -23,8 +23,8 @@ function VizCatalog(catalog)
 
     return figure1
 end
-
-save("gwpperfc.png", VizCatalog(catalog))
+f1 = VizCatalog(catalog)
+# save("gwpperfc.png", VizCatalog(catalog))
 
 
 function ParplotCatalog(df) 
@@ -64,6 +64,6 @@ function ParplotCatalog(df)
 end
 
 
-open("./parallel.html", "w") do io
-    PlotlyBase.to_html(io, ParplotCatalog(catalog).plot)
-end
+# open("./parallel.html", "w") do io
+#     PlotlyBase.to_html(io, ParplotCatalog(catalog).plot)
+# end

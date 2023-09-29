@@ -9,9 +9,6 @@ function find_A_smin(fc′::Real, b_w::Float64, d::Float64, f_y::Float64)
     return (3 * sqrt(fc′) * b_w * d) / f_y
 end
 
-# function circle_pts(r::Float64; n = 50, base = [0. , 0.])
-#     return [r .* [cos(thet), sin(thet)] .+ base for thet in range(0, 2pi, n)]
-# end
 
 function get_catalog(bar_combinations)
     fc′s = 28.:10.:56.
@@ -56,7 +53,8 @@ function get_catalog(bar_combinations)
                     ds = parse.(Float64,split(map[k],"_")) #vector of diameters
                     #spacing check
                     nr = length(ds) #number of rebars
-                    spacing_check = w > ( 2*covering + sum(ds) + (nr-1)*maximum([40, 1.5*maximum(ds)]) )
+                    spacing = maximum([40, 1.5*maximum(ds)])
+                    spacing_check = w > ( 2*covering + sum(ds) + (nr-1)*spacing )
                     
                     #minimum rebar check
                     as_min = find_A_smin(fc′, w, h-covering, fy)
@@ -68,8 +66,26 @@ function get_catalog(bar_combinations)
                     else
                         # create rebar section
                         count = count +1 
-                        xs = repeat([0.0], nr)
-                        ys = repeat([-h + covering], nr)
+
+                        #x position is a bit tricky.
+                        # goes from left to right.
+                        if length(ds) == 1 #put in the middle of we
+                            xs = [w/2]
+                        elseif length(ds) == 2
+                            offset = covering + ds[1]/2
+                            xs = [offset, w-offset]
+                        else
+                        #in case there are more, 
+                            xs = [covering + ds[1]/2]
+                            for ii = 2:(nr-1)
+                                push!(xs,xs[end]+spacing+ds[ii]/2)
+                            end
+                            push!(xs, w - covering - ds[end]/2)
+                        end
+
+                            
+                        # xs = repeat([0.0], nr)
+                        ys = -h + covering .+ ds./2
                         fys = repeat([fy], nr)
                         rebars = RebarSection(areas, fys, xs, ys, ds)
 

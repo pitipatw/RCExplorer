@@ -10,6 +10,7 @@ standard_sizes = new_dict
 function get_combinations(standard_sizes::Dict{String,Float64})
     combinations= Dict{String,Vector{Float64}}()
     map = 0
+    # @show standard_sizes
     n = length(standard_sizes)
     #single bar
     for (k,v) in standard_sizes

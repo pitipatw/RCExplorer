@@ -34,8 +34,10 @@ function VizCatalog_by_section(catalog)
     xlabel = "Mu [kNm]", ylabel = "GWP kgCO2e/kg")
     fc′s = getfield.(catalog[!,:Section], :fc′)
     s1 = scatter!(ax1, catalog[!, :Mu]/1e6, catalog[!, :Gwp], color = fc′s)
-    s2 = scatter!(ax2, catalog[!, :Mu]/1e6, catalog[!, :Gwp], color = catalog[!, :Section_ID],
-    colormap = cgrad(:Spectral,ns, categorical = true), opacity =  fc′s./maximum(fc′s))
+    s2 = scatter!(ax2, catalog[!, :Mu]/1e6, catalog[!, :Gwp], color = catalog[!, :Section_ID], #.+ fc′s./maximum(fc′s)/2,
+    colormap = cgrad(:Spectral,ns, categorical = true), 
+    # opacity =  fc′s./maximum(fc′s)
+    )
     Colorbar(figure1[2,1], s1, label = "fc′", vertical = false)
     Colorbar(figure1[2,2], s2, label = "Section", vertical = false)
 

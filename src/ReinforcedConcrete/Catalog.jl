@@ -11,7 +11,7 @@ end
 
 
 function get_catalog(bar_combinations)
-    fc′s = 25.:10.:55.
+    fc′s = 25.:5.:55.
     widths = 200.:100.:500.
     heights = 200.:100.:500.
     rebars = bar_combinations  #get from Hazel's work

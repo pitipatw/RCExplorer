@@ -3,11 +3,11 @@ using kjlMakie
 set_theme!(kjl_light)
 
 function VizCatalog(catalog)
-for s in 1:10#size(catalog)[1]
+for s in 1:size(catalog)[1]
     # c is a concrete section 
     c = catalog[s, :Section]
     section_ID = catalog[s, :Section_ID]
-    rebar_section = getfield.(catalog[s,:Section],rebars) , 
+    # rebar_section = getfield.(catalog[s,:Section],rebars) , 
     figure1 = Figure(resolution=(600, 600))
     xl = -25
     xu = 550

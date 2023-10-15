@@ -20,8 +20,6 @@ function VizCatalog(catalog)
     return figure1
 end
 f1 = VizCatalog(catalog)
-
-
 # save("gwpperfc.png", VizCatalog(catalog))
 
 function VizCatalog_by_section(catalog)
@@ -209,8 +207,8 @@ function VizCatalog_by_mu(catalog, minval, maxval)
     return figure1
 end
 
-mu = 50
-ϵ  = 0.25
+mu = 100
+ϵ  = 1
 f2 = VizCatalog_by_mu(catalog,mu, mu+ϵ)
 DataInspector(f2, indicator_color = :red,enable_indicators = true)
 

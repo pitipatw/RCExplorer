@@ -12,8 +12,9 @@ end
 
 function get_catalog(bar_combinations)
     fc′s = 25.:5.:55.
-    widths = 200.:100.:500.
+    # widths = 200.:100.:500.
     heights = 200.:100.:500.
+    set_bd_ratio = 0.5:0.05:1 #b/d ratio b = bd_ratio*d
     rebars = bar_combinations  #get from Hazel's work
     rebars = bar_combinations  #get from Hazel's work
 
@@ -30,23 +31,25 @@ function get_catalog(bar_combinations)
     section_ID = 0
     count = 0 
     
-    for w in widths
+    for bd_ratio in set_bd_ratio
         for h in heights
             section_ID = section_ID + 1
+            b = bd_ratio*d
+            #rectangular section
+            # p1.....p2
+            # .      .
+            # .      .
+            # .      .
+            # p4.....p3
+        
+            p1 = [0. , 0.]
+            p2 = [w , 0.]
+            p3 = [w, -h]
+            p4 = [0., -h]
+            pts = [p1,p2,p3,p4]
+            section = SolidSection(pts)
             for fc′ in fc′s
-                #rectangular section
-                # p1.....p2
-                # .      .
-                # .      .
-                # .      .
-                # p4.....p3
-            
-                p1 = [0. , 0.]
-                p2 = [w , 0.]
-                p3 = [w, -h]
-                p4 = [0., -h]
-                pts = [p1,p2,p3,p4]
-                section = SolidSection(pts)
+
 
 
                 #Rebars will be single layer, 50mm up from the bottom

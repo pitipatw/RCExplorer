@@ -43,3 +43,20 @@ function get_combinations(standard_sizes::Dict{String,Float64})
 end
 
 bar_combinations,map = get_combinations(standard_sizes)
+
+function get_rebar()
+
+#get_rebar_combination()
+    #Rebars will be single layer, 50mm up from the bottom
+    #y = -h + 50 [mm]
+    for (k,r_idx) in map
+        # println(typeof(r_idx))
+        # println(bar_combinations)
+        areas = bar_combinations[r_idx]
+        ds = parse.(Float64,split(map[k],"_")) #vector of diameters
+        #spacing check
+        nr = length(ds) #number of rebars
+        spacing = maximum([40, 1.5*maximum(ds)])
+        spacing_check = w > ( 2*covering + sum(ds) + (nr-1)*spacing )
+    end
+end

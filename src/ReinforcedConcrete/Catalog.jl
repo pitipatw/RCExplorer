@@ -7,15 +7,39 @@ include("RcCapacities.jl")
 
 println("Need to do ρmax")
 
-function find_ρ_min(fc′::Real, f_y::Float64)
-    return 3 * sqrt(fc′) / f_y
-end
+"""
+β1 from ACI 318-19
 
 """
-find Maximum area of steel (As max)
-based on minimum allowable strain (> 0.002)
+function get_β1(fc′::Real)
+    return clamp(0.85 - 0.05 * (fc′ - 28) / 7, 0.65, 0.85)
+end
+
+
 """
-function find_ρ_max()
+find the boundary (ρ_min, ρ_max) of the reinforcement ratio
+
+Input\\
+fc′: concrete compressive strength [MPa]\\
+Input [Optional]\\
+fy = 420 steel yield strength [MPa]\
+
+Outputs\\
+ρ_min: minimum reinforcement ratio\\
+ρ_max: maximum reinforcement ratio\\
+"""
+function get_ρ_bounds(fc′::Real; 
+    fy::Float64 = 420.0)
+    β1 = get_β1(fc′)
+
+    ρ_min1 =  0.25 * sqrt(fc′) / fy
+    ρ_min2 =  1.4/fy
+    ρ_min = maximum([ρ_min1, ρ_min2])
+
+    ρ_max = 3/5*0.85*β1*fc′/fy
+
+    return ρ_min, ρ_max
+end
 
 
 function design_space()

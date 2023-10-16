@@ -5,6 +5,8 @@ include("Definitions.jl")
 include("Rebars/Rebars.jl")
 include("RcCapacities.jl")
 
+println("Need to do ρmax")
+
 function find_A_smin(fc′::Real, b_w::Float64, d::Float64, f_y::Float64)
     return (3 * sqrt(fc′) * b_w * d) / f_y
 end

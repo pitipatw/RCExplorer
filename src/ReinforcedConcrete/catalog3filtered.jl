@@ -41,7 +41,6 @@ for fc′ in fc′s
                 ρ = getρ(Mu,fc′,b,d)
                 if ρ > 0.02 || ρ < 0.002
                     check_ρ = false
-                    continue
                 else
                     check_ρ = true
                 end
@@ -98,6 +97,7 @@ end
 ax2 =Axis(f1[2,1], xlabel = "Mu Nmm", ylabel = "gwp [kgCO2e/kg.m]")
 s2 = scatter!(ax2, new_mus, min_gwps, color = new_fc′s) 
 Colorbar(f1[2,2], s2, label = "fc′", labelrotation =0)
+save("catalog3.png", f1)
 
 # selected_fc′ = Observable{Any}(0.0)
 
@@ -105,7 +105,7 @@ Colorbar(f1[2,2], s2, label = "fc′", labelrotation =0)
 # max_fc′ = maximum(fc′s)
 # slider1 = Slider(f1[1,2], range = fc′s, startvalue = min_fc′,horizontal = false)
 # slider1 = Slider(f1[1,2], range = ds, startvalue = minimum(ds),horizontal = false)
-# slider1 = Slider(f1[3,2], range = Mus, startvalue = minimum(Mus),horizontal = false)
+slider1 = Slider(f1[3,2], range = Mus, startvalue = minimum(Mus),horizontal = false)
 # slider2 = Slider(f1[2,3], range = ds, startvalue = minimum(ds),horizontal = false)
 
 # x = Observable(catalog[!, :area])
@@ -124,16 +124,16 @@ filtered1 = lift(slider1.value) do n
     return new_cat[!, :Mu], new_cat[!, :gwp]
 end
 
-# ax3 = Axis(f1[3,1]
-#         ,xlabel = "fc′ [MPa]", ylabel = "gwp [kgCO2e/kg.m]")
+ax3 = Axis(f1[3,1]
+        ,xlabel = "fc′ [MPa]", ylabel = "gwp [kgCO2e/kg.m]")
 
-# center_pos = (maximum(fc′s) + minimum(fc′s))/2
-# ver_pos = maximum(catalog[!, :gwp])/2
+center_pos = (maximum(fc′s) + minimum(fc′s))/2
+ver_pos = maximum(catalog[!, :gwp])/2
 
-# s3 = scatter!(ax3, catalog[!, :fc′], catalog[!,:gwp], color = :white, strokewidth=0)
-# s2 = scatter!(ax3,x, y, color=:green,strokewidth = 0 )
-# text!(ax3,50, 0.04,text = title_name)
+s3 = scatter!(ax3, catalog[!, :fc′], catalog[!,:gwp], color = :white, strokewidth=0)
+s2 = scatter!(ax3,x, y, color=:green,strokewidth = 0 )
+text!(ax3,50, 0.04,text = title_name)
 
-# # Colorbar(f1[1,2], s1, label = "fc′", labelrotation =0)
+# Colorbar(f1[1,2], s1, label = "fc′", labelrotation =0)
 
 

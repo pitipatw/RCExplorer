@@ -7,29 +7,47 @@ include("RcCapacities.jl")
 
 println("Need to do ρmax")
 
-function find_A_smin(fc′::Real, b_w::Float64, d::Float64, f_y::Float64)
-    return (3 * sqrt(fc′) * b_w * d) / f_y
+function find_ρ_min(fc′::Real, f_y::Float64)
+    return 3 * sqrt(fc′) / f_y
 end
 
+"""
+find Maximum area of steel (As max)
+based on minimum allowable strain (> 0.002)
+"""
+function find_ρ_max()
+
+
+function design_space()
+    set_fc′ = 25.0:0.5:55.0
+    set_d   = 100.0:25:500.0
+    set_bd_ratio = 0.5:0.05:1.0
+    # widths = 200.:100.:500.
+    # heights = 200.:100.:500.
+    # set_bd_ratio = 0.5:0.05:1 #b/d ratio b = bd_ratio*d
+    # rebars = bar_combinations  #get from Hazel's work
+    # rebars = bar_combinations  #get from Hazel's work
+    return set_fc′, set_d, set_bd_ratio
+end
 
 function get_catalog(bar_combinations)
-    fc′s = 25.:5.:55.
-    # widths = 200.:100.:500.
-    heights = 200.:100.:500.
-    set_bd_ratio = 0.5:0.05:1 #b/d ratio b = bd_ratio*d
-    rebars = bar_combinations  #get from Hazel's work
-    rebars = bar_combinations  #get from Hazel's work
+    set_fc′, set_d, set_bd_ratio = design_space()
 
+    #some constants
     fy = 420.0
     covering = 40. #ACI318M-19 Table 20.5.1.3.1, Not exposed to weather or in contact with ground
 
-    catalog = Dict()
+    
+    #results placeholder
     Cs = Vector{ConcreteSection}()
     Ps = Vector{Float64}()
     Ms = Vector{Float64}()
     GWPs = Vector{Float64}()
     Section_IDs = Vector{Int64}()
+    #catalog placeholder
+    catalog = Dict()
 
+    #for different combination of sections and IDs.
     section_ID = 0
     count = 0 
     

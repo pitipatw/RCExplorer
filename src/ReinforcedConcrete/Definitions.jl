@@ -19,7 +19,7 @@ function fc′_to_eec(fc′)
     #load the function, maybe precalc into an equation and put it in here
     # (dummy) gwp = 0.001 * fc′ + 0.002 *fc′^2
     # gwp = 0.0012*fc′+0.07
-    gwp = (-0.0627*fc′^2 + 10.009*fc′ + 84.148)/2400
+    gwp = -0.0627*fc′^2 + 10.009*fc′ + 84.148
 
     return gwp
 end

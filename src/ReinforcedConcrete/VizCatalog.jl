@@ -1,8 +1,17 @@
 using Makie, GLMakie
-using PlotlyJS
+using PairPlots
+# using PlotlyJS
 
+
+# figure1 = Figure(resolution = (1920, 1000))
+# pairplot(catalog[!, [:Gwp, :Mu]], catalog[!, [:fc′, :Area,:Mu, :Pu, :ρ]] )
+"""
+Visualize the design space
+"""
 function VizCatalog(catalog)
+    pairplot(catalog[!, [:gwp]], catalog[!, [:fc′, :Area,:Mu, :Pu, :ρ]])
     figure1 = Figure(resolution = (1920, 1000))
+
     # gwp vs fc' (best)
     ax1 = Axis(figure1[1,1],
         xlabel = "fc′ [MPa]", ylabel = "GWP kgCO2e/kg",

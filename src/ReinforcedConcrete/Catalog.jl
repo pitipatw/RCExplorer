@@ -106,9 +106,8 @@ function get_catalog()
             p4 = [0., -h]
             pts = [p1,p2,p3,p4]
             section = SolidSection(pts)
-
+            section_ID = section_ID + 1
             for fc′ in set_fc′
-                section_ID = section_ID + 1
             # for mu in set_mu
                 #get the bounds of ρ
                 ρ_min , ρ_max = get_ρ_bounds(fc′)

@@ -45,9 +45,9 @@ function VizCatalog(catalog)
     Colorbar(figure1[2,2], s2, label = "fc′ [MPa]", labelrotation =0, vertical = false)
     return figure1
 end
-f1 = VizCatalog(catalog)
+# f1 = VizCatalog(catalog)
 
-save("catalog1_1.png", f1)
+# save("catalog1_1.png", f1)
 #########################################
 """
 Visualize the design space
@@ -108,14 +108,13 @@ function VizCatalog_min(catalog)
 
     return figure1
 end
-f13d = VizCatalog_min(catalog)
-save("catalog13D.png", f13d)
-
+# f13d = VizCatalog_min(catalog)
+# save("catalog13D.png", f13d)
 
 """
 Visualize the design space
 """
-function VizCatalog_min(catalog)
+function VizCatalog_section(catalog)
     #set boundaries for plot
     Mu_min = minimum(catalog[!,:Mu])/1e6
     Mu_max = maximum(catalog[!,:Mu])/1e6
@@ -128,89 +127,35 @@ function VizCatalog_min(catalog)
     gwp_min = minimum(catalog[!,:Gwp])
     gwp_max = maximum(catalog[!,:Gwp])
 
-    sorted_mu_catalog = sort(catalog, [:Mu, fc′])
-    ϵ = 0.01 #%
-    
-    figure1 = Figure(resolution = (600, 600))
-    for i in 1:size(catalog)[1]
-        
-
-
-
-
-
     #get for each Mu, get minimum gwp designs.
 
    
-    f1 = Figure(resolution = (600,1800))
-    ax1 = Axis(f1[1,1], title = "Simplified Plot"
-    ,xlabel = "Mu [kNm]", ylabel = "gwp [kgCO2e/kg.m]")
-    s1 = scatter!(ax1, catalog[!, :fc′], catalog[!,:gwp], color = catalog[!, :Mu], strokewidth=0)
-        Colorbar(f1[1,2], s1, label = "Mu", labelrotation =0)
-        
-        min_gwps = Vector{Float64}()
-        new_mus  = Vector{Float64}()
-        new_fc′s = Vector{Float64}()
-        for i in Mus
-            #find the lowest gwp for each Mu
-            new_cat = filter(:Mu => x-> x == i, catalog)
-            if size(new_cat)[1] == 0
-                continue
-            end
-            min_gwp = minimum(new_cat[!,:gwp])
-            min_fc′ = filter(:gwp => x-> x == min_gwp, new_cat)[!,:fc′][1]
-            push!(new_fc′s, min_fc′)
-            push!(min_gwps, min_gwp)
-            push!(new_mus, i)
-        end
-        
-        ax2 =Axis(f1[2,1], xlabel = "Mu Nmm", ylabel = "gwp [kgCO2e/kg.m]")
-        s2 = scatter!(ax2, new_mus, min_gwps, color = new_fc′s) 
-        Colorbar(f1[2,2], s2, label = "fc′", labelrotation =0)
-        
-        # selected_fc′ = Observable{Any}(0.0)
-        
-        # min_fc′ = minimum(fc′s)
-        # max_fc′ = maximum(fc′s)
-        # slider1 = Slider(f1[1,2], range = fc′s, startvalue = min_fc′,horizontal = false)
-        # slider1 = Slider(f1[1,2], range = ds, startvalue = minimum(ds),horizontal = false)
-        # slider1 = Slider(f1[3,2], range = Mus, startvalue = minimum(Mus),horizontal = false)
-        # slider2 = Slider(f1[2,3], range = ds, startvalue = minimum(ds),horizontal = false)
-        
-        # x = Observable(catalog[!, :area])
-        x = Observable(catalog[!, :fc′])
-        y = Observable(catalog[!, :gwp])
-        # z = Observable(catalog[!, :fc′])
-        title_name = Observable("String")
-        filtered1 = lift(slider1.value) do n
-            new_cat = filter(:Mu => x-> x == n, catalog)
-            # x[] = Point2f.(vcat.(new_cat[!,:area], new_cat[!,:gwp]))
-            x.val = new_cat[!,:fc′]
-            y[] = new_cat[!,:gwp]
-            # z[] = new_cat[!,:fc′]
-            title_name[] = string(n)
-            println(size(new_cat))
-            return new_cat[!, :Mu], new_cat[!, :gwp]
-    # pairplot(catalog[!, [:Gwp]], catalog[!, [:fc′, :Area,:Mu, :Pu, :ρ]])
-    figure1 = Figure(resolution = (1920, 1000))
-    # Textbox(figure1[2, 3], width = 300)
-    # gwp vs fc' (best)
-    ax1 = Axis(figure1[1,1],
-        xlabel = "fc′ [MPa]", ylabel = "GWP kgCO2e/kg",
-        limits = (fc′_min-5,fc′_max+5,0,1.1*gwp_max))
-    # fc′s = getfield.(catalog[!,:Section], :fc′)
-    s1 = scatter!(ax1, catalog[!, :fc′], 
-    catalog[!, :Gwp],
-    colormap =:amp, color = catalog[!, :Mu]/1e6,
-    strokewidth = 0 )
-    Colorbar(figure1[2,1], s1, label = "Mu [kNm]", labelrotation =0,vertical = false)
-
-    ax2 = Axis(figure1[1,2],
-    xlabel = "Mu [kNm]", ylabel = "GWP [kgCO2e/kg]",
+    figure1 = Figure(resolution = (600,600), backgroundcolor = :grey)
+    ax1 = Axis(figure1[1,1], title = "Section Plot"
+    ,xlabel = "Mu [kNm]", ylabel = "gwp [kgCO2e/kg.m]",
     limits = (0,Mu_max+10,0,1.1*gwp_max))
-    fc′s = getfield.(catalog[!,:Section], :fc′)
-    s2 = scatter!(ax2, catalog[!, :Mu]/1e6, catalog[!, :Gwp], color = fc′s, markersize = 10 , strokewidth = 0)
-    Colorbar(figure1[2,2], s2, label = "fc′ [MPa]", labelrotation =0, vertical = false)
+    slider1 = Slider(figure1[1,2], range = 1:maximum(catalog[!,:Section_ID]), startvalue =1,horizontal = false)
+    
+    x1 = Observable(catalog[!, :Mu]/1e6)
+    y1 = Observable(catalog[!, :Gwp])
+    c1 = Observable(catalog[!, :fc′])
+    lift(slider1.value) do n
+        new_cat = filter(:Section_ID => x-> x == n, catalog)
+        # x[] = Point2f.(vcat.(new_cat[!,:area], new_cat[!,:gwp]))
+        x1.val = new_cat[!,:Mu]/1e6
+        y1[] = new_cat[!,:Gwp]
+        c1[] = new_cat[!,:fc′]
+        # @show x1.val[end]
+
+        # z[] = new_cat[!,:fc′]
+        # title_name[] = string(n)
+        println(size(new_cat))
+        return new_cat[!, :Mu], new_cat[!, :Gwp]
+    end
+    s1 = scatter!(ax1, x1,y1, color = c1, strokewidth=0, colorrange = (fc′_min,fc′_max))
+    Colorbar(figure1[2,1], s1, label = "fc′ [MPa]", labelrotation =0, vertical = false)
+
+    # pairplot(catalog[!, [:Gwp]], catalog[!, [:fc′, :Area,:Mu, :Pu, :ρ]])
     return figure1
 end
 

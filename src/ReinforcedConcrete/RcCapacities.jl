@@ -7,12 +7,8 @@ function find_Mu(c::ConcreteSection)
     a = depth_from_area(c.geometry,area_req, show_stats = false);
     β1 = clamp(0.85- 0.05*(c.fc′-28)/7, 0.65,0.85)
     c_ = a/β1
-
     d = c.geometry.ymax - c.geometry.ymin
-    c_
-    
-     ϵs = 0.003 * (d - c_) / c_
-    ϵs
+    ϵs = 0.003 * (d - c_) / c_
     ϕ = clamp(0.65 + 0.25 * (ϵs - 0.002) / 0.003, 0.65, 0.90)
     mu = sum(c.rebars.ast .* c.rebars.fy .* (d - (a/2)))
     return  ϕ*mu

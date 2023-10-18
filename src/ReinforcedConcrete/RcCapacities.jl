@@ -3,14 +3,19 @@ function find_Pu(c::ConcreteSection)
     return 0.65*0.85 * (c.fc′ * (c.geometry.area - sum(c.rebars.ast))) + sum(c.rebars.fy .* c.rebars.ast)
 end
 function find_Mu(c::ConcreteSection)
-     area_req = sum(c.rebars.ast .* c.rebars.fy)/(c.fc′*0.85)
-     a = depth_from_area(c.geometry,area_req, show_stats = false);
-     β1 = clamp(0.85- 0.05*(c.fc′-28)/7, 0.65,0.85)
+    area_req = sum(c.rebars.ast .* c.rebars.fy)/(c.fc′*0.85)
+    a = depth_from_area(c.geometry,area_req, show_stats = false);
+    β1 = clamp(0.85- 0.05*(c.fc′-28)/7, 0.65,0.85)
     c_ = a/β1
+
     d = c.geometry.ymax - c.geometry.ymin
+    c_
+    
      ϵs = 0.003 * (d - c_) / c_
+    ϵs
     ϕ = clamp(0.65 + 0.25 * (ϵs - 0.002) / 0.003, 0.65, 0.90)
-    return  ϕ*sum(c.rebars.ast .* c.rebars.fy .* (d - (a/2)))
+    mu = sum(c.rebars.ast .* c.rebars.fy .* (d - (a/2)))
+    return  ϕ*mu
 end
 
 """

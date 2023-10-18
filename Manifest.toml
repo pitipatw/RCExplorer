@@ -2,7 +2,7 @@
 
 julia_version = "1.9.2"
 manifest_format = "2.0"
-project_hash = "865ad64c6ad8eca088950b8a4582a8ac0e75d772"
+project_hash = "23b0f2c98cfe70ea6883c51c2df24e56548181ca"
 
 [[deps.AbstractFFTs]]
 deps = ["LinearAlgebra"]
@@ -1049,6 +1049,12 @@ deps = ["OrderedCollections", "UnPack"]
 git-tree-sha1 = "34c0e9ad262e5f7fc75b10a9952ca7692cfc5fbe"
 uuid = "d96e819e-fc66-5662-9728-84c9c7592b0a"
 version = "0.12.3"
+
+[[deps.ParetoRecipes]]
+deps = ["RecipesBase"]
+git-tree-sha1 = "28de67e5adc33c7a7d15d463c21c4ad0ddf23bf2"
+uuid = "71a409db-0c41-4225-8938-aaf295661ce5"
+version = "0.0.1"
 
 [[deps.Parsers]]
 deps = ["Dates", "PrecompileTools", "UUIDs"]

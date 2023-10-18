@@ -46,6 +46,7 @@ function get_design_space()
     set_fc′ = 25.0:0.5:55.0
     set_d   = 100.0:25:500.0
     set_bd_ratio = 0.5:0.05:1.0
+    set_mu = 1e6:5e6:1500e6
     # widths = 200.:100.:500.
     # heights = 200.:100.:500.
     # set_bd_ratio = 0.5:0.05:1 #b/d ratio b = bd_ratio*d
@@ -60,7 +61,7 @@ function get_design_space()
     #             push!(design_space, (i1,i2,i3))
     #         end
     println("Design Space of ", prod(length.([set_fc′, set_d, set_bd_ratio])) , " points")
-    return set_fc′, set_d, set_bd_ratio
+    return set_fc′, set_d, set_bd_ratio, set_mu
 end
 
 function get_catalog()
@@ -68,7 +69,7 @@ function get_catalog()
     fy = 420.0
     covering = 40. #ACI318M-19 Table 20.5.1.3.1, Not exposed to weather or in contact with ground
      
-    set_fc′, set_d, set_bd_ratio = get_design_space()
+    set_fc′, set_d, set_bd_ratio, set_mu = get_design_space()
     #results placeholder
     Cs = Vector{ConcreteSection}()
     Ps = Vector{Float64}() #Compressive Capacity
@@ -85,7 +86,7 @@ function get_catalog()
     
     for bd_ratio in set_bd_ratio
         for d in set_d
-            section_ID = section_ID + 1
+            
             b = bd_ratio*d
 
             #reate an AsapSection section
@@ -107,6 +108,8 @@ function get_catalog()
             section = SolidSection(pts)
 
             for fc′ in set_fc′
+                section_ID = section_ID + 1
+            # for mu in set_mu
                 #get the bounds of ρ
                 ρ_min , ρ_max = get_ρ_bounds(fc′)
                 n_ρ = 100
@@ -121,6 +124,8 @@ function get_catalog()
 
                      
                     #Create a concrete section here.
+                    # @show fc′ = find_fc′(mu, section, rebars)
+
                     c = ConcreteSection(fc′, section, rebars)
                     #Calculate the capacity.
                     P = find_Pu(c)

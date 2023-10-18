@@ -1,7 +1,8 @@
 using Makie, GLMakie
-using PairPlots
+using kjlMakie
+set_theme!(kjl_light)
+# using PairPlots
 # using PlotlyJS
-
 
 # figure1 = Figure(resolution = (1920, 1000))
 # pairplot(catalog[!, [:Gwp, :Mu]], catalog[!, [:fc′, :Area,:Mu, :Pu, :ρ]] )
@@ -9,29 +10,215 @@ using PairPlots
 Visualize the design space
 """
 function VizCatalog(catalog)
-    pairplot(catalog[!, [:gwp]], catalog[!, [:fc′, :Area,:Mu, :Pu, :ρ]])
-    figure1 = Figure(resolution = (1920, 1000))
+    #set boundaries for plot
+    Mu_min = minimum(catalog[!,:Mu])/1e6
+    Mu_max = maximum(catalog[!,:Mu])/1e6
+    fc′_min = minimum(catalog[!, :fc′])
+    fc′_max = maximum(catalog[!, :fc′])
+    area_min = minimum(catalog[!, :Area])
+    area_max = maximum(catalog[!, :Area])
+    ρ_min = minimum(catalog[!, :ρ])
+    ρ_max = maximum(catalog[!, :ρ])
+    gwp_min = minimum(catalog[!,:Gwp])
+    gwp_max = maximum(catalog[!,:Gwp])
+
+
+    # pairplot(catalog[!, [:Gwp]], catalog[!, [:fc′, :Area,:Mu, :Pu, :ρ]])
+    figure1 = Figure(resolution = (1920, 1000),backgroundcolor = :grey)
 
     # gwp vs fc' (best)
     ax1 = Axis(figure1[1,1],
         xlabel = "fc′ [MPa]", ylabel = "GWP kgCO2e/kg",
-        limits = (20,60,0,120))
-    fc′s = getfield.(catalog[!,:Section], :fc′)
-    s1 = scatter!(ax1, fc′s, catalog[!, :Gwp], color = catalog[!, :Mu])
+        limits = (fc′_min-5,fc′_max+5,0,1.1*gwp_max))
+    # fc′s = getfield.(catalog[!,:Section], :fc′)
+    s1 = scatter!(ax1, catalog[!, :fc′], 
+    catalog[!, :Gwp],
+    colormap =:amp, color = catalog[!, :Mu]/1e6,
+    strokewidth = 0 )
+    Colorbar(figure1[2,1], s1, label = "Mu [kNm]", labelrotation =0,vertical = false)
 
     ax2 = Axis(figure1[1,2],
-    xlabel = "Mu [Nm]", ylabel = "GWP [kgCO2e/kg]")
+    xlabel = "Mu [kNm]", ylabel = "GWP [kgCO2e/kg]",
+    limits = (0,Mu_max+10,0,1.1*gwp_max))
     fc′s = getfield.(catalog[!,:Section], :fc′)
-    s2 = scatter!(ax2, catalog[!, :Mu]/1000, catalog[!, :Gwp], color = fc′s )
-
-    Colorbar(figure1[1,3], s2, label = "fc′", labelrotation =0)
-
+    s2 = scatter!(ax2, catalog[!, :Mu]/1e6, catalog[!, :Gwp], color = fc′s, markersize = 10 , strokewidth = 0)
+    Colorbar(figure1[2,2], s2, label = "fc′ [MPa]", labelrotation =0, vertical = false)
     return figure1
 end
 f1 = VizCatalog(catalog)
 
+save("catalog1_1.png", f1)
+#########################################
+"""
+Visualize the design space
+"""
+function VizCatalog_ratio(catalog)
+    #set boundaries for plot
+    Mu_min = minimum(catalog[!,:Mu])/1e6
+    Mu_max = maximum(catalog[!,:Mu])/1e6
+    fc′_min = minimum(catalog[!, :fc′])
+    fc′_max = maximum(catalog[!, :fc′])
+    area_min = minimum(catalog[!, :Area])
+    area_max = maximum(catalog[!, :Area])
+    ρ_min = minimum(catalog[!, :ρ])
+    ρ_max = maximum(catalog[!, :ρ])
+    gwp_min = minimum(catalog[!,:Gwp])
+    gwp_max = maximum(catalog[!,:Gwp])
 
-# save("gwpperfc.png", VizCatalog(catalog))
+    gwp_concrete = getfield.(catalog[!,:Section], :gwp_concrete)
+    gwp_rebars = getfield.(catalog[!,:Section], :gwp_rebars)
+    ratio = gwp_concrete ./ (gwp_rebars .+ gwp_concrete)
+    
+    figure1 = Figure(resolution = (1920, 1000),backgroundcolor = :grey)
+
+    ax1 = Axis(figure1[1,1],title = "Plot Cocncrete Ratio",
+    xlabel = "Mu [kNm]", ylabel = "GWP [kgCO2e/kg]",
+    limits = (0,Mu_max+10,0,1.1*gwp_max))
+    s1 = scatter!(ax1, catalog[!, :Mu]/1e6, catalog[!, :Gwp], color = ratio, markersize = 10 , strokewidth = 0)
+    Colorbar(figure1[2,1], s1, label = "Concrete contribution", labelrotation =0, vertical = false)
+
+    ax2 = Axis3(figure1[1,2],
+    xlabel = "fc′ [MPa]", ylabel = "GWP [kgCO2e/kg]", zlabel = "Concrete Contribution [ratio]",
+    limits = (0,Mu_max+10,0,1.1*gwp_max, 0,1.1),
+    zticks = 0:0.1:1)
+    s2 = scatter!(ax2, catalog[!, :Mu]/1e6, catalog[!, :Gwp],ratio, color = ratio, markersize = 1 , strokewidth = 0)
+    return figure1
+end
+
+ratio_plot = VizCatalog_ratio(catalog)
+
+
+function VizCatalog_min(catalog)
+    Mu_max = maximum(catalog[!,:Mu])/1e6
+    gwp_max = maximum(catalog[!,:Gwp])
+    sorted_catalog = sort(catalog, [:Mu, :Gwp], rev = true)
+    paretoo = catalog[1:1,:]
+    foreach(row -> row.Gwp < paretoo.Gwp[end] && push!(paretoo, row), eachrow(sorted_catalog));
+    @show size(paretoo)
+    figure1 = Figure(resolution = (1920, 1000),backgroundcolor = :grey)
+    ax1 = Axis(figure1[1,1],title = "Minimum plot",
+    xlabel = "Mu [kNm]", ylabel = "GWP [kgCO2e/kg]",
+    limits = (0,Mu_max+10,0,1.1*gwp_max))
+    s1 = scatter!(ax1,
+    paretoo[!, :Mu]/1e6 , 
+    paretoo[!, :Gwp],
+    color = paretoo[!, :Section_ID],
+    strokewidth = 0 )
+    Colorbar(figure1[2,1], s1, label = "fc′ [MPa]", labelrotation =0,vertical = false)
+
+    return figure1
+end
+f13d = VizCatalog_min(catalog)
+save("catalog13D.png", f13d)
+
+
+"""
+Visualize the design space
+"""
+function VizCatalog_min(catalog)
+    #set boundaries for plot
+    Mu_min = minimum(catalog[!,:Mu])/1e6
+    Mu_max = maximum(catalog[!,:Mu])/1e6
+    fc′_min = minimum(catalog[!, :fc′])
+    fc′_max = maximum(catalog[!, :fc′])
+    area_min = minimum(catalog[!, :Area])
+    area_max = maximum(catalog[!, :Area])
+    ρ_min = minimum(catalog[!, :ρ])
+    ρ_max = maximum(catalog[!, :ρ])
+    gwp_min = minimum(catalog[!,:Gwp])
+    gwp_max = maximum(catalog[!,:Gwp])
+
+    sorted_mu_catalog = sort(catalog, [:Mu, fc′])
+    ϵ = 0.01 #%
+    
+    figure1 = Figure(resolution = (600, 600))
+    for i in 1:size(catalog)[1]
+        
+
+
+
+
+
+    #get for each Mu, get minimum gwp designs.
+
+   
+    f1 = Figure(resolution = (600,1800))
+    ax1 = Axis(f1[1,1], title = "Simplified Plot"
+    ,xlabel = "Mu [kNm]", ylabel = "gwp [kgCO2e/kg.m]")
+    s1 = scatter!(ax1, catalog[!, :fc′], catalog[!,:gwp], color = catalog[!, :Mu], strokewidth=0)
+        Colorbar(f1[1,2], s1, label = "Mu", labelrotation =0)
+        
+        min_gwps = Vector{Float64}()
+        new_mus  = Vector{Float64}()
+        new_fc′s = Vector{Float64}()
+        for i in Mus
+            #find the lowest gwp for each Mu
+            new_cat = filter(:Mu => x-> x == i, catalog)
+            if size(new_cat)[1] == 0
+                continue
+            end
+            min_gwp = minimum(new_cat[!,:gwp])
+            min_fc′ = filter(:gwp => x-> x == min_gwp, new_cat)[!,:fc′][1]
+            push!(new_fc′s, min_fc′)
+            push!(min_gwps, min_gwp)
+            push!(new_mus, i)
+        end
+        
+        ax2 =Axis(f1[2,1], xlabel = "Mu Nmm", ylabel = "gwp [kgCO2e/kg.m]")
+        s2 = scatter!(ax2, new_mus, min_gwps, color = new_fc′s) 
+        Colorbar(f1[2,2], s2, label = "fc′", labelrotation =0)
+        
+        # selected_fc′ = Observable{Any}(0.0)
+        
+        # min_fc′ = minimum(fc′s)
+        # max_fc′ = maximum(fc′s)
+        # slider1 = Slider(f1[1,2], range = fc′s, startvalue = min_fc′,horizontal = false)
+        # slider1 = Slider(f1[1,2], range = ds, startvalue = minimum(ds),horizontal = false)
+        # slider1 = Slider(f1[3,2], range = Mus, startvalue = minimum(Mus),horizontal = false)
+        # slider2 = Slider(f1[2,3], range = ds, startvalue = minimum(ds),horizontal = false)
+        
+        # x = Observable(catalog[!, :area])
+        x = Observable(catalog[!, :fc′])
+        y = Observable(catalog[!, :gwp])
+        # z = Observable(catalog[!, :fc′])
+        title_name = Observable("String")
+        filtered1 = lift(slider1.value) do n
+            new_cat = filter(:Mu => x-> x == n, catalog)
+            # x[] = Point2f.(vcat.(new_cat[!,:area], new_cat[!,:gwp]))
+            x.val = new_cat[!,:fc′]
+            y[] = new_cat[!,:gwp]
+            # z[] = new_cat[!,:fc′]
+            title_name[] = string(n)
+            println(size(new_cat))
+            return new_cat[!, :Mu], new_cat[!, :gwp]
+    # pairplot(catalog[!, [:Gwp]], catalog[!, [:fc′, :Area,:Mu, :Pu, :ρ]])
+    figure1 = Figure(resolution = (1920, 1000))
+    # Textbox(figure1[2, 3], width = 300)
+    # gwp vs fc' (best)
+    ax1 = Axis(figure1[1,1],
+        xlabel = "fc′ [MPa]", ylabel = "GWP kgCO2e/kg",
+        limits = (fc′_min-5,fc′_max+5,0,1.1*gwp_max))
+    # fc′s = getfield.(catalog[!,:Section], :fc′)
+    s1 = scatter!(ax1, catalog[!, :fc′], 
+    catalog[!, :Gwp],
+    colormap =:amp, color = catalog[!, :Mu]/1e6,
+    strokewidth = 0 )
+    Colorbar(figure1[2,1], s1, label = "Mu [kNm]", labelrotation =0,vertical = false)
+
+    ax2 = Axis(figure1[1,2],
+    xlabel = "Mu [kNm]", ylabel = "GWP [kgCO2e/kg]",
+    limits = (0,Mu_max+10,0,1.1*gwp_max))
+    fc′s = getfield.(catalog[!,:Section], :fc′)
+    s2 = scatter!(ax2, catalog[!, :Mu]/1e6, catalog[!, :Gwp], color = fc′s, markersize = 10 , strokewidth = 0)
+    Colorbar(figure1[2,2], s2, label = "fc′ [MPa]", labelrotation =0, vertical = false)
+    return figure1
+end
+
+f3 = VizCatalog_with_lines(catalog)
+
+
+
+
 
 function VizCatalog_by_section(catalog)
     figure1 = Figure(resolution = (1920,1000))
@@ -65,6 +252,7 @@ function VizCatalog_by_section(catalog)
     # end
     return figure1
 end
+
 
 f2 = VizCatalog_by_section(catalog)
 # save("bySection.png", f2)

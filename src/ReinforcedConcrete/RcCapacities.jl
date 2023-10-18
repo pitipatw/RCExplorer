@@ -13,6 +13,28 @@ function find_Mu(c::ConcreteSection)
     return  ϕ*sum(c.rebars.ast .* c.rebars.fy .* (d - (a/2)))
 end
 
+"""
+Working on this...
+"""
+function find_fc′(Mu::Float64,section::AsapSections.PolygonalSection,rebars)
+    #use bisection to find fc′.
+    fc′_guess = 28
+    step = 0.1
+    tol = 1
+    while tol > 1e-3
+        c = ConcreteSection(fc′_guess, section, rebars)
+        Mu_calc = find_Mu(c)
+        tol = abs(Mu_calc-Mu)/Mu
+        if count > 500
+            println("Maximum Iteration Exceed, Please increase maxiter")
+            return 0.0
+        end
+        fc′_guess = fc′_guess + step
+    end
+   return  fc′_guess
+end
+
+
 # function find_Vu(c::ConcreteSection)
 #     println("Working in progress")
 #     @assert 1 = 2

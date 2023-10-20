@@ -55,7 +55,7 @@ Pu [N]
 Mu [Nmm]
 Not yet implemented : Shear [N]
 """
-function calcap(fc′, as, ec, fpe,L,t,Lc;
+function get_capacities(fc′, as, ec, fpe,L,t,Lc;
     # L = 102.5,
     # t = 17.5,
     # Lc = 15.,
@@ -207,7 +207,7 @@ function calcap(fc′, as, ec, fpe,L,t,Lc;
     return pu, mu, vu, embodied
 end
 
-function getterrain(L,t,Lc; test=true)
+function get_catalog(L,t,Lc; test=true)
     if !test
         range_fc′ = 28.:7.:56.
         range_as = [99.0, 140.0]
@@ -241,7 +241,7 @@ function getterrain(L,t,Lc; test=true)
                     ec = range_ec[idx_ec]
                     fpe = range_fpe[idx_fpe]
 
-                    pu, mu, vu, embodied = calcap(fc′, as, ec, fpe, L, t, Lc)
+                    pu, mu, vu, embodied = get_capacities(fc′, as, ec, fpe, L, t, Lc)
                     idx_all = [idx_fc′, idx_as, idx_ec, idx_fpe]
 
                     idx = map(n,idx_all)
@@ -254,7 +254,7 @@ function getterrain(L,t,Lc; test=true)
     return results
 end
 
-results = getterrain(test=false)
+results = get_catalog(test=false)
 # 11.147s , 575.72 MiB allocation
 date = Dates.today()
 time = Dates.now()

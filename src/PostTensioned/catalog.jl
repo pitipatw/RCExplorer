@@ -37,13 +37,24 @@ function map(n::Vector{Int64}, idx::Vector{Int64})
     return sum(d)
 end
 
-
+"""
+Get embodied carbon coefficient of concrete based on fc′
+input : fc′ [MPa]
+output: ecc of fc′ [kgCO2e/m3]
+"""
 function fc2e(fc′::Real)
     out = -0.0626944435544512 * fc′^2 + 10.0086510099949 * fc′ + 84.14807
    return  out
 end
 
-
+"""
+Calculate capacities of the given section
+Inputs : section information
+Outputs:
+Pu [N]
+Mu [Nmm]
+Not yet implemented : Shear [N]
+"""
 function calcap(fc′, as, ec, fpe,L,t,Lc;
     # L = 102.5,
     # t = 17.5,

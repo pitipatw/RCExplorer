@@ -7,7 +7,7 @@ using CSV
 include("pixelgeo.jl") #generating Pixel geometries
 include("sectionproperties.jl")
 include("calstr.jl") #calculating strength
-include("getterrain.jl")
+include("catalog.jl") #was named getterrain.jl
 include("connection.jl")
 include("connection_dummy.jl")
 include("plotjson.jl")

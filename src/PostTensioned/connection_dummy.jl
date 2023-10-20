@@ -1,79 +1,102 @@
+using CSV, DataFrames, JSON
+using Dates
+date = Dates.today()
 """
-cin format
-fc', as, ec, fpe, pu, mu, vu, embodied
+catalog format
+fc', as, ec, fpe, Pu, Mu, Vu, embodied
 """
+catalog = CSV.read(joinpath(@__DIR__,"Outputs\\output_$date.csv"), DataFrame)
 
-cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
-#HTTP connection
+#test input
+open(joinpath(@__DIR__,"JSON\\small_test_input.json"), "r") do f
+    global demands = DataFrame(JSON.parse(f, dicttype=Dict{String,Any}))
+    ns = size(demands)[1]
+    demands[!,:idx] = 1:ns
 
-#initialize the server
-# try
-open(joinpath(@__DIR__,"dummy_28_8.json"), "r") do f
-    global data = JSON.parse(f, dicttype=Dict{String,Any})
 end
 
-#load the data terrain
-
+function match_demands(demands, catalog)
 #goes in a loop
-ns = length(data)
-# ne = 20 #somehow get the number of elements
+ns = size(demands)[1]
+ne = maximum(demands[!,:e_idx])+1 #python starts at 0
+
 #number of available choices
-nc = size(cin,1)
-global outr = Vector{Matrix{Float64}}()
-# for si = 1:ns
+nc = size(catalog,1)
+output_results = Dict{Int64, Vector{Int64}}()
+
+#go through each section.
 for i = 1:ns
-    # c1 = Vector{Float64}(undef, ns)
-    # c2 = Vector{Float64}(undef, ne)
-
-    pu = data[i]["pu"]
-    mu = data[i]["mu"]
-    vu = 0 #data[i]["vu"]
-    ec_max = data[i]["ec_max"]
+    pu = demands[i,"pu"]
+    mu = demands[i,"mu"]
+    vu = demands[i,"vu"]
+    ec_max = demands[i,"ec_max"]
     
-    # @show repeat([pu, mu, vu], outer = (1,nc))'
-    if data[i]["type"] == "Beam"
-        #calculate section with 3 pieces
-        #have to add 
-        np = 3
-        #load csv with np suffix
+    # # @show repeat([pu, mu, vu], outer = (1,nc))'
+    # if demands[i,"type"] == "primary"
+    #     #calculate section with 3 pieces
+    #     #have to add 
+    #     np = 3
+    #     #load csv with np suffix
+    #     #or use the catalog that was loaded intiailly.
+    #     cin = CSV.read("results//output_$date.csv", DataFrame)
+    # elseif data[i]["type"] == "Column"
+    #     #calculate section with 4 or 2 pieces
+    #     np = 4
+    #     #load csv with np suffix
+    #     # cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
+    #     np = 2
+    #     #load csv with np suffix
+    #     # cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
 
-        cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
-    elseif data[i]["type"] == "Column"
-        #calculate section with 4 or 2 pieces
-        np = 4
-        #load csv with np suffix
-        # cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
 
-        np = 2
-        #load csv with np suffix
-        # cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
-
-
-        cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
-    end
+    #     cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
+    # end
 
     #I found that this might be slower than looping... here : https://julialang.org/blog/2013/09/fast-numeric/
-    global c1 = cin[:,5:7] .> repeat([pu, mu, vu], outer = (1,nc))'
-    # c2 = cin[:,8] .< repeat(ec_max, nc)
-    cout = copy(c1) # .&& c2
-    global check = vec(Bool.(prod(cout, dims=2)))
-    # println(i)
-    # @show sum(check)
-    if sum(check) == 0 #no answer for this section
-        println("No results found")
-        push!(outr, zeros(1,8))
+    global feasible_sections = filter([:Pu,:Mu,:Vu,:ec] => (x1,x2,x3,x4) -> 
+    x1>pu &&
+    x2>mu &&
+    x3>vu &&
+    x4<= ec_max, catalog)
+
+    if size(feasible_sections)[1] == 0
+        println("No results found for section $i")
+        output_results[i] = []
         # println(outr)
     else
-        push!(outr, cin[check,:])
-        println("results found")
+        output_results[i] = feasible_sections[!,:ID]
         # println(outr)
     end
-    
 end
-# println(outr)
 
-#here, turn outr into a dictionary, for json file 
-#just loop them
+return output_results
+end
+
+output_results = match_demands(demands,catalog)
+
+"""
+Find the optimum result for each element. 
+For the same element, will use the same fc′ and steel size. 
+
+"""
+#function find_optimum(output_results
+ns = size(demands)[1]
+ne = maximum(demands[!,:e_idx])+1 #python starts at 0
+
+# for i in 1:ne
+    i = 1
+    sections = filter(:e_idx => x-> x==i, demands)
+    println(i," ",demands[i,:e_idx])
+    println(sections)
+    sections[!, :idx]
+    println(getindex.(Ref(output_results) , sections[!,:idx] ))
+
+# end
+
+    fesible_sections 
+select the same fc′ and steel size that shows across the elements, 
+find the lowest
+
 outvod = Vector{Vector{Dict}}(undef, size(outr,1))
 for i = axes(outr,1)
     temp = Vector{Dict}(undef, size(outr[i],1))

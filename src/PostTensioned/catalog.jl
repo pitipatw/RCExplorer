@@ -1,8 +1,9 @@
 using Dates
 using BenchmarkTools
-
+using AsapSections
+using Printf
 include("pixelgeo.jl")
-# include("sectionproperties.jl")
+include("sectionproperties.jl")
 include("ptFunc.jl")
 
 
@@ -25,7 +26,7 @@ include("ptFunc.jl")
 """
 Map n dimentional vector into an index.
 """
-function map(n::Vector{Int64}, idx::Vector{Int64})
+function mapping(n::Vector{Int64}, idx::Vector{Int64})
     d = Vector{Int64}(undef, length(n))
     for i in eachindex(n) 
         if i == length(d)
@@ -51,17 +52,19 @@ end
 Calculate capacities of the given section
 Inputs : section information
 Outputs:
-Pu [N]
-Mu [Nmm]
-Not yet implemented : Shear [N]
+Pu [kN]
+Mu [kNm]
+Shear [kN]
 """
 function get_capacities(fc′, as, ec, fpe,L,t,Lc;
+    echo = false,
     # L = 102.5,
     # t = 17.5,
     # Lc = 15.,
     # L = 202.5,
     # t = 17.5,
     # Lc = 15.,
+    T = "Beam",
     Ep = 200_000,
     shear_ratio = 0.30,
     fR1 = 2.0,
@@ -71,19 +74,20 @@ function get_capacities(fc′, as, ec, fpe,L,t,Lc;
 
     if T == "Beam"
         section = make_Y_layup_section(L, t, Lc)
-        compoundsection = CompoundSection(section)
+
         ac = section.area
         # y, A = depth_map(compoundsection, 250)
 
     elseif T == "Column"
         section = make_X2_layup_section(L, t, Lc)
         #also have to do x4, but will see.
-        compoundsection = CompoundSection(section)
+        # section = make_X4_layup_section(L, t, Lc)
+        # compoundsection = CompoundSection(section)
         ac = section.area
-        y, A = depth_map(compoundsection, 250)
+        # y, A = depth_map(compoundsection, 250)
     else
         println("Invalid type")
-        end
+    end
 
     #load section properties file
     # filename = "pixel_$L_$t_$Lc.csv"
@@ -96,8 +100,7 @@ function get_capacities(fc′, as, ec, fpe,L,t,Lc;
     pn = (ccn - (fpe - 0.003 * Ep) * as) / 1000 #[kN]
     pu = 0.65 * 0.8 * pn #[kN]
     ptforce = pu #[kN]
-    # @printf "The pure compression capacity is %.3f [kN]\n" pu
-    # println("#"^50)
+
 
     #Pure Moment Capacity
 
@@ -110,25 +113,25 @@ function get_capacities(fc′, as, ec, fpe,L,t,Lc;
 
     #concrete compression area balanced with steel tension force.
     acomp = as * fps / (0.85 * fc′)
-    steelpos = ec*-L
     if acomp > ac 
         println("Acomp exceeds Ac, using Ac instead")
         acomp = ac
     end
-
-
+    #rebar position measure from 0.0 down
+    rebarpos = ec*(-L)
     @show d = depth_from_area(section,acomp)
 
-    depth, cgcomp= getprop(acomp, L, t, Lc)
-    clipped_section = sutherland_hodge(section::PolygonalSection, y::Float64; return_section = true)
-
+    # depth, cgcomp= getprop(acomp, L, t, Lc)
+    
+    # clipped_section = sutherland_hodge(section::PolygonalSection, y::Float64; return_section = true)
     # mn_steel = as * fps * arm / 1e6 #[kNm]
 
     #Recheck with concrete.
     #check compression strain, make sure it's not more than 0.003
-    c = depth
+    # c = depth
+    c = d
     ϵs = fps / Ep
-    ϵc = c * ϵs / (steelpos - c)
+    ϵc = c * ϵs / (rebarpos - c)
 
     if ϵc > 0.003
         # println("Compression strain is $ϵc which is more than 0.003")
@@ -141,28 +144,24 @@ function get_capacities(fc′, as, ec, fpe,L,t,Lc;
         tol = 0.001
 
         while tol > 0.001
-            ϵs_new = ϵc_new*(steelpos - depth) / depth
+            ϵs_new = ϵc_new*(rebarpos - depth) / depth
             fps_new = ϵs_new * Ep
 
             acomp = as * fps_new / (0.85 * fc′)
             
-            depth_new, cgcomp= getprop(acomp, L, t, Lc)
+            # depth_new, cgcomp= getprop(acomp, L, t, Lc)
             tol = abs(depth_new - depth)/depth
             depth = depth_new
         end
     end
-
-    arm = cgcomp - steelpos
+    cgcomp = 100 #dummy
+    arm = cgcomp - rebarpos
         #moment arm of the section is the distance between the centroid of the compression area and the steel.
 
     mn = 0.85 * fc′ * ac * arm / 1e6 #[kNm]
-    mu = Φ(ϵs) * mn #[kNmm]
+    mu = Φ(ϵs) * mn #[kNm]
 
-    # @printf "The pure moment capacity is %.3f [kNm]\n" mu
     # println("#"^50)
-
-
-
 
     #Shear Calculation
     d = L
@@ -178,23 +177,23 @@ function get_capacities(fc′, as, ec, fpe,L,t,Lc;
     σcp2 = 0.2 * fc′
     σcp = clamp(σcp1, 0.0, σcp2)
     fFtu = get_fFtu(fFts, wu, CMOD3, fR1, fR3)
-    vn = ashear * get_v(ρs, fc′, fctk, fFtu, 1.0, σcp1, k)#kN
+    vn = ashear * get_v(ρs, fc′, fctk, fFtu, 1.0, σcp1, k)# already in kN
     vu = 0.75 * vn
-
-    # println("#"^50)
-    # @printf "The shear capacity is %.3f [kN]\n" vu
-
-
 
 
     #Embodied Carbon Calculation
-    cfc = fc2e(fc′)
+    cfc = fc2e(fc′) #kgCO2e/m3
     # 0.854 #kgper kg
     # 7850 kg/m3
     cst = 0.854*7850 #kgCO2e/m3
 
-    embodied = ( ac * cfc + as * cst )/ 1e6
-
+    embodied = ( ac*cfc + as*cst )/ 1e6 
+    if echo
+        @printf "The pure compression capacity is %.3f [kN]\n" pu
+        @printf "The pure moment capacity is %.3f [kNm]\n" mu
+        @printf "The shear capacity is %.3f [kN]\n" vu
+        @printf "The embodied carbon is %.3f [kgCo2e/m3]" embodied
+    end
 
 #write output into CSV
 # dataall = hcat(val,res,checkres)
@@ -207,8 +206,16 @@ function get_capacities(fc′, as, ec, fpe,L,t,Lc;
     return pu, mu, vu, embodied
 end
 
-function get_catalog(L,t,Lc; test=true)
-    if !test
+
+function get_catalog()
+    L = 102.5
+    t = 17.5
+    Lc = 15.0
+    return get_catalog(L,t,Lc)
+end
+
+function get_catalog(L,t,Lc; run_test=true)
+    if !run_test
         range_fc′ = 28.:7.:56.
         range_as = [99.0, 140.0]
         range_ec = 0.5:0.1:1.2
@@ -244,22 +251,25 @@ function get_catalog(L,t,Lc; test=true)
                     pu, mu, vu, embodied = get_capacities(fc′, as, ec, fpe, L, t, Lc)
                     idx_all = [idx_fc′, idx_as, idx_ec, idx_fpe]
 
-                    idx = map(n,idx_all)
+                    idx = mapping(n,idx_all)
                     results[idx,:] = [fc′, as, ec, fpe, pu, mu, vu, embodied]
                 end
             end
         end
     end
-
-    return results
+    df = DataFrame(results , [ :fc′, :as,:ec,:fpe,:Pu,:Mu, :Vu, :carbon])
+    df[!,:ID] = 1:total_s
+    return df# results # DataFrame(results)
 end
 
-results = get_catalog(test=false)
+#test
+results_test = get_catalog()
+results = get_catalog(100,10,10,run_test=false)
 # 11.147s , 575.72 MiB allocation
 date = Dates.today()
 time = Dates.now()
-CSV.write("results//output_$date.csv", DataFrame(results, :auto))
 
+CSV.write(joinpath(@__DIR__,"Outputs\\output_$date.csv"), results)
 
 
 # calcap(28., 99.0, 0.5, 1600.0)

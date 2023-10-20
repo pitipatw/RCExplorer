@@ -3,28 +3,25 @@ using JSON
 using HTTP
 using Dates
 using CSV
+#generating Pixel geometries
+include("pixelgeo.jl") 
 
-include("pixelgeo.jl") #generating Pixel geometries
 include("sectionproperties.jl")
-include("calstr.jl") #calculating strength
+# include("calstr.jl") #calculating strength
 include("catalog.jl") #was named getterrain.jl
 include("connection.jl")
 include("connection_dummy.jl")
+
+#post processing
 include("plotjson.jl")
 
-
-"""
-cin format
-fc', as, ec, fpe, pu, mu, vu, embodied
-"""
-
-cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
 #HTTP connection
-function main(cin)
+function main(catalog)
     #initialize the server
     #try
         server = WebSockets.listen!("127.0.0.1", 2000) do ws
             for msg in ws
+                #store the input as a csv file, label today's date.
                 println("Hello World")
                 today = string(Dates.today())
                 today = replace(today, "-" => "_")
@@ -36,14 +33,12 @@ function main(cin)
                 end
                 println("input_"*filename*" written succesfully")
                 
-                #load the data terrain
-
                 #goes in a loop
                 ns = length(data) #each section
                 ne = 20 #somehow get the number of elements
-                # nc = 4 #number of available choices
-                nc = size(cin,1)
-                global outr = Vector{Matrix{Float64}}()
+                #number of available choices (nc)
+                nc = size(catalog,1)
+                outr = Vector{Matrix{Float64}}()
                 # for si = 1:ns
                 for i = 1:ns
                     #load the right section data
@@ -59,34 +54,35 @@ function main(cin)
                     ec_max = parse(Float64,data[i]["ec_max"])
                     
                     # @show repeat([pu, mu, vu], outer = (1,nc))'
-                    if data[i]["t"] == "Beam"
+                    if data[i]["type"] == "Beam"
                         #calculate/load section with 3 pieces
-                        #have to add 
-                        cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
+                        #slow 
+                        get_catalog(L,t,Lc)
 
-                        np = 3
-                        #load csv with np suffix
-
-                        cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
-                    elseif data[i]["t"] == "Column"
+                        # #have to add 
+                        # catalog = Matrix(CSV.read("results//output_$date.csv", DataFrame))
+                        # np = 3
+                        # #load csv with np suffix
+                        # catalog = Matrix(CSV.read("results//output_$date.csv", DataFrame))
+                    elseif data[i]["type"] == "Column"
                         #calculate section with 4 or 2 pieces
                         np = 4
                         #load csv with np suffix
-                        # cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
+                        # catalog = Matrix(CSV.read("results//output_$date.csv", DataFrame))
 
                         np = 2
                         #load csv with np suffix
-                        # cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
+                        # catalog = Matrix(CSV.read("results//output_$date.csv", DataFrame))
 
 
-                        cin = Matrix(CSV.read("results//output_$date.csv", DataFrame))
+                        catalog = Matrix(CSV.read("results//output_$date.csv", DataFrame))
                     end
 
                     #I found that this might be slower than looping... here : https://julialang.org/blog/2013/09/fast-numeric/
-                    global c1 = cin[:,5:7] .> repeat([pu, mu, vu], outer = (1,nc))'
-                    # c2 = cin[:,8] .< repeat(ec_max, nc)
+                    c1 = catalog[:,5:7] .> repeat([pu, mu, vu], outer = (1,nc))'
+                    # c2 = catalog[:,8] .< repeat(ec_max, nc)
                     cout = copy(c1) # .&& c2
-                    global check = vec(Bool.(prod(cout, dims=2)))
+                    check = vec(Bool.(prod(cout, dims=2)))
                     # println(i)
                     # @show sum(check)
                     if sum(check) == 0 #no answer for this section
@@ -95,7 +91,7 @@ function main(cin)
                         # println(outr)
                         
                     else
-                        push!(outr, cin[check,:])
+                        push!(outr, catalog[check,:])
                         # println(outr)
                     end
                     
@@ -150,7 +146,7 @@ function main(cin)
 end
 
 close(server)
-server = main(cin)
+server = main(catalog)
 # close(server)
  
 

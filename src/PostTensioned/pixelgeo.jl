@@ -26,6 +26,8 @@ L = length of pixel arm
 t = thickness
 Lc = straight region of pixel (length before arc)
 n = number of discretizations for arc
+
+Output : Vector of Vector of points [Vector{Vector{Float64}}]
 """
 function make_pixel_geometry(L::Real, t::Real, Lc::Real; n = 10)
 
@@ -67,62 +69,34 @@ end
 
 rotate_2d_about_origin(point::AbstractVector{<:Real}, angle::Float64) = [cos(angle) -sin(angle); sin(angle) cos(angle)] * point
 rotate_2d_about_origin(point::Matrix{<:Real}, angle::Float64) = point * [cos(angle) -sin(angle); sin(angle) cos(angle)] 
+# rotate_2d_about_origin(point::Vector{Vector{Float64}}, angle::Float64) = point * [cos(angle) -sin(angle); sin(angle) cos(angle)] 
 move_2d(point::Matrix{<:Real}, vector::Matrix{<:Real}) = point .+ vector
 
 """
-Can be replaced with ylayup making by Keith jl.
+By Keithjl
 """
 function make_Y_layup_section(L::Real, t::Real, Lc::Real; n = 10, offset = 0.)
-# function fullpixel(L::Real, t::Real, Lc::Real; n = 10)
-    pixel = vecvec_to_matrix(make_pixel_geometry(L, t, Lc; n = n))
 
-#offset from origin
+    pixel = make_pixel_geometry(L, t, Lc; n = n)
+
+    #offset from origin
     θ = pi / 6
     offset_vector = offset .* [cos(θ), -sin(θ)]
 
-    #base pixel
-    base_pixel = [point + offset_vector for point in pixel]
+    #bottom right pixel
+    right_pixel = [point + offset_vector for point in pixel]
 
-    #right pixel 
-    right_pixel = rotate_2d_about_origin(base_pixel, pi/6)
+    #top pixel
+    top_pixel = rotate_2d_about_origin.(right_pixel, 2pi/3)
 
-    #rotate to the top
-    # newpoints1 = Matrix{Float64}(undef, size(nodes)[1], 2)
-    top_pixel = rotate_2d_about_origin(right_pixel, 2*pi/3)
-    left_pixel = rotate_2d_about_origin(right_pixel, 4*pi/3)
-    # # draw a full pixelframe section
-    # for i = 1:size(nodes)[1]
-    #     x = nodes[i,1]
-    #     y = nodes[i,2]
-    #     r = sqrt(x^2 + y^2)
-    #     θ = atand(y/x)
+    #bottom left pixel
+    left_pixel = rotate_2d_about_origin.(top_pixel, 2pi/3)
 
-    #     newθ = θ + 120.0
-    #     newx = r*cosd(newθ)
-    #     newy = r*sind(newθ)
-    #     newpoints1[i,:] = [newx, newy]
-    # end
-    
-    # #rotate to the side (flip)
-    # newpoints2 = Matrix{Float64}(undef, size(nodes)[1], 2)
-    # # draw a full pixelframe section
-    # for i = 1:size(nodes)[1]
-    #     x = nodes[i,1]
-    #     y = nodes[i,2]
-    #     r = sqrt(x^2 + y^2)
-    #     θ = atand(y/x)
-   
-    #     newθ = θ + 240.0
-    #     newx = r*cosd(newθ)
-    #     newy = r*sind(newθ)
+    sections = SolidSection.([right_pixel, top_pixel, left_pixel])
 
-    #     newpoints2[i,:] = [newx, newy]
-    # end
-
-    Y3pixel = vcat(right_pixel, top_pixel, left_pixel)
-
-    return Y3pixel
+    return CompoundSection(sections)
 end
+
 
 function make_X2_layup_section(L::Real, t::Real, Lc::Real; n = 10)
     g1 = makepixel(L, t, Lc, n = n)

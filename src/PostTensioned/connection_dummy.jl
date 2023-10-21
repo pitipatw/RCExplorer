@@ -12,7 +12,6 @@ open(joinpath(@__DIR__,"JSON\\small_test_input.json"), "r") do f
     global demands = DataFrame(JSON.parse(f, dicttype=Dict{String,Any}))
     ns = size(demands)[1]
     demands[!,:idx] = 1:ns
-
 end
 
 function match_demands(demands, catalog)
@@ -85,11 +84,31 @@ ne = maximum(demands[!,:e_idx])+1 #python starts at 0
 
 # for i in 1:ne
     i = 1
+    #sections index that are with that element.
     sections = filter(:e_idx => x-> x==i, demands)
     println(i," ",demands[i,:e_idx])
     println(sections)
     sections[!, :idx]
     println(getindex.(Ref(output_results) , sections[!,:idx] ))
+    unique(fc′)
+    unique(as)
+
+    for i in fc′ unique
+        if length(filter(this fc′))
+        if that length == total section (happens all) 
+            save it.
+
+    do the same thing for as. 
+    
+    get the design that match both cases. (have fc′ and as across entire beam.)
+
+    end
+    With those design, sort by gwp. 
+    select the lowest gwp .
+
+    save the  design to the eleement 
+    Dict( i -> [vector of indices])
+    #get result
 
 # end
 

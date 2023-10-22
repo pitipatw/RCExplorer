@@ -54,9 +54,11 @@ for i = 1:ns
     #I found that this might be slower than looping... here : https://julialang.org/blog/2013/09/fast-numeric/
     global feasible_sections = filter([:Pu,:Mu,:Vu,:ec] => (x1,x2,x3,x4) -> 
     x1>pu &&
-    x2>mu &&
-    x3>vu &&
-    x4<= ec_max, catalog)
+    x2>mu #&&
+    #x3>vu &&
+    #x4<= ec_max, 
+    ,catalog
+    )
 
     if size(feasible_sections)[1] == 0
         println("No results found for section $i")
@@ -90,8 +92,13 @@ ne = maximum(demands[!,:e_idx])+1 #python starts at 0
     println(sections)
     sections[!, :idx]
     println(getindex.(Ref(output_results) , sections[!,:idx] ))
-    unique(fc′)
-    unique(as)
+    idxes = getindex.(Ref(output_results) , sections[!,:idx] )
+    j = 1 
+    feasible_idx = idxes[j]
+    sub_catalog = catalog[feasible_idx, :]
+    all_fc′ =  unique(sub_catalog[!, :fc′])
+    all_as = unique(sub_catalog[!, :as])
+    
 
     for i in fc′ unique
         if length(filter(this fc′))

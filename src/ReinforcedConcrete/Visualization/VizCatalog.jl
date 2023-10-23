@@ -24,14 +24,14 @@ function VizCatalog(catalog)
 
 
     # pairplot(catalog[!, [:Gwp]], catalog[!, [:fc′, :Area,:Mu, :Pu, :ρ]])
-    figure1 = Figure(resolution = (1920, 1000),backgroundcolor = :grey)
+    figure1 = Figure(resolution = (1920, 1500),backgroundcolor = :grey)
 
     # gwp vs fc' (best)
     ax1 = Axis(figure1[1,1],
-        xlabel = "fc′ [MPa]", ylabel = "GWP kgCO2e/kg",
+        xlabel = "fc′ [MPa]", ylabel = "GWP kgCO2e/kg", title = "Overall Plot",
         limits = (fc′_min-5,fc′_max+5,0,1.1*gwp_max))
     # fc′s = getfield.(catalog[!,:Section], :fc′)
-    s1 = scatter!(ax1, catalog[!, :fc′], 
+    s1 = scatter!(ax1, catalog[!, :fc′], markersize = 5, 
     catalog[!, :Gwp],
     colormap =:amp, color = catalog[!, :Mu]/1e6,
     strokewidth = 0 )
@@ -41,13 +41,20 @@ function VizCatalog(catalog)
     xlabel = "Mu [kNm]", ylabel = "GWP [kgCO2e/kg]",
     limits = (0,Mu_max+10,0,1.1*gwp_max))
     fc′s = getfield.(catalog[!,:Section], :fc′)
-    s2 = scatter!(ax2, catalog[!, :Mu]/1e6, catalog[!, :Gwp], color = fc′s, markersize = 10 , strokewidth = 0)
+    s2 = scatter!(ax2, catalog[!, :Mu]/1e6, catalog[!, :Gwp], color = fc′s, markersize = 5 , strokewidth = 0)
     Colorbar(figure1[2,2], s2, label = "fc′ [MPa]", labelrotation =0, vertical = false)
+
+    ax3 = Axis(figure1[1,3],
+    xlabel = "SteelArea [mm2]", ylabel = "GWP [kgCO2e/kg]",
+    limits = (0,area_max+10,0,1.1*gwp_max))
+    areas = getfield.(getfield.(catalog[!,:Section], :geometry), :area)
+    s3 = scatter!(ax3, areas, catalog[!, :Gwp], color = fc′s, markersize = 5 , strokewidth = 0)
+    Colorbar(figure1[2,3], s3, label = "fc′ [MPa]", labelrotation =0, vertical = false)
     return figure1
 end
-# f1 = VizCatalog(catalog)
-
-# save("catalog1_1.png", f1)
+f1 = VizCatalog(catalog)
+f11 = VizCatalog(pareto)
+# save("Monday_catalog1_1.png", f1)
 #########################################
 """
 Visualize the design space
@@ -77,24 +84,36 @@ function VizCatalog_ratio(catalog)
     s1 = scatter!(ax1, catalog[!, :Mu]/1e6, catalog[!, :Gwp], color = ratio, markersize = 10 , strokewidth = 0)
     Colorbar(figure1[2,1], s1, label = "Concrete contribution", labelrotation =0, vertical = false)
 
-    ax2 = Axis3(figure1[1,2],
-    xlabel = "fc′ [MPa]", ylabel = "GWP [kgCO2e/kg]", zlabel = "Concrete Contribution [ratio]",
-    limits = (0,Mu_max+10,0,1.1*gwp_max, 0,1.1),
-    zticks = 0:0.1:1)
-    s2 = scatter!(ax2, catalog[!, :Mu]/1e6, catalog[!, :Gwp],ratio, color = ratio, markersize = 1 , strokewidth = 0)
+    ax2 = Axis(figure1[1,2],
+    xlabel = "Mu [kNm]", ylabel = "Concrete contribution", #zlabel = "Concrete Contribution [ratio]",
+    limits = (0,Mu_max+10, 0,1.1),)
+    s2 = scatter!(ax2, catalog[!, :Mu]/1e6,ratio, color = ratio, markersize = 1 , strokewidth = 0)
+
+    ax3 = Axis(figure1[1,3],
+    xlabel = "Mu [kNm]", ylabel = "Concrete contribution", #zlabel = "Concrete Contribution [ratio]",
+    limits = (0,Mu_max+10, 0,1.1),)
+    s2 = scatter!(ax2, catalog[!, :Mu]/1e6,ratio, color = ratio, markersize = 1 , strokewidth = 0)
+
+
+
     return figure1
 end
 
 ratio_plot = VizCatalog_ratio(catalog)
+ratio_plot2 = VizCatalog_ratio(pareto)
 
 
 function VizCatalog_min(catalog)
     Mu_max = maximum(catalog[!,:Mu])/1e6
     gwp_max = maximum(catalog[!,:Gwp])
-    sorted_catalog = sort(catalog, [:Mu, :Gwp], rev = true)
-    paretoo = catalog[1:1,:]
+
+    sorted_catalog = sort(catalog, [:Mu,:Gwp],rev = true)
+    paretoo = sorted_catalog[1:1,:]
+
     foreach(row -> row.Gwp < paretoo.Gwp[end] && push!(paretoo, row), eachrow(sorted_catalog));
     @show size(paretoo)
+    @show paretoo[1,:]
+
     figure1 = Figure(resolution = (1920, 1000),backgroundcolor = :grey)
     ax1 = Axis(figure1[1,1],title = "Minimum plot",
     xlabel = "Mu [kNm]", ylabel = "GWP [kgCO2e/kg]",
@@ -106,9 +125,9 @@ function VizCatalog_min(catalog)
     strokewidth = 0 )
     Colorbar(figure1[2,1], s1, label = "fc′ [MPa]", labelrotation =0,vertical = false)
 
-    return figure1
+    return figure1, paretoo
 end
-# f13d = VizCatalog_min(catalog)
+f13d, pareto = VizCatalog_min(catalog)
 # save("catalog13D.png", f13d)
 
 """
@@ -158,6 +177,8 @@ function VizCatalog_section(catalog)
     # pairplot(catalog[!, [:Gwp]], catalog[!, [:fc′, :Area,:Mu, :Pu, :ρ]])
     return figure1
 end
+VizCatalog_section(catalog)
+
 
 f3 = VizCatalog_with_lines(catalog)
 

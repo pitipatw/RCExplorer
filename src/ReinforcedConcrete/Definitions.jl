@@ -13,7 +13,11 @@ end
 """
 Define a group of rebars for a RC section
 ecc of rebar in from CLF database -> fabricated rebars
+(unfabricated)
 753 kgCO2e/metricTon -> 753*7.85 metricTon/m3 = 5911.05 kgCO2e/m3
+or
+(fabricated)
+854 kgCO2e/metricTon -> 854*7.85 metricTon/m3 = 6703.90 kgCO2e/m3
 """
 function RebarSection(areas, fy, xs, ys, ds)
     return RebarSection(areas, fy, xs,ys,ds,repeat([5911.05], length(areas)))
@@ -46,9 +50,9 @@ end
 
 #function for defining ConcreteSection
 function ConcreteSection(fc′::Float64, section::AsapSections.PolygonalSection, rebars::RebarSection)
-    gwp_concrete = fc′_to_eec(fc′)*(section.area - sum(rebars.ast))/1e6
-    gwp_rebars = sum(rebars.ast .* rebars.gwp)/1e6
-    section_gwp = gwp_concrete + gwp_rebars
+    gwp_concrete = fc′_to_eec(fc′)*(section.area - sum(rebars.ast))
+    gwp_rebars = sum(rebars.ast .* rebars.gwp)
+    section_gwp = (gwp_concrete + gwp_rebars)/1e6
     return ConcreteSection(fc′,
                            4700*sqrt(fc′),
                            section_gwp,

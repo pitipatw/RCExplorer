@@ -81,7 +81,6 @@ end
 """
 Find the optimum result for each element. 
 For the same element, will use the same fc′ steel size and post tensioning stress.
-
 """
 #function find_optimum(output_results, elements_to_sections, demands)
 ns = size(demands)[1]
@@ -110,10 +109,10 @@ for i in ne #loop each element
         filter!(e->e ∈ all_fc′, avai_fc′)
         filter!(e->e ∈ all_as, avai_as)
         filter!(e->e ∈ all_fpe, avai_fpe)
-        println("#####")
-        println(length(avai_fc′))
-        println(length(avai_as))
-        println(length(avai_fpe))
+        # println("#####")
+        # println(length(avai_fc′))
+        # println(length(avai_as))
+        # println(length(avai_fpe))
         #now we filter the design space by avai...
         #end
     end
@@ -130,13 +129,23 @@ end
 element_designs
 
 final_designs = Vector{Vector}(undef, length(element_designs))
-for i in ne
-    dfs = Vector{DataFrame}()
-    sections = elements_to_sections[i]
-    for j in sections
-        push!(dfs, element_designs[j])
+for i in 1:length(element_designs)
+    e = ne[i]
+    final_designs[i] = Array{Float64,1}(element_designs[i][1,:])
+    sections = elements_to_sections[e]
+
+    current_fc′ = final_design[i][1]
+    current_as  = final_design[i][2]
+    current_fpe = final_design[i][4]
+
+    for s in sections
+        j = 1
+        while true
+            if current_fc′ 
+            end
+        end
     end
-    final_designs[i] = collect(innerjoin(dfs..., on = [:fc′,:as,:fpe], makeunique = true)[1,:])
+    
 end
 
 

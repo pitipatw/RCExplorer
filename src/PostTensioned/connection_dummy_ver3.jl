@@ -7,7 +7,7 @@ include("Pt_Catalog.jl")
 catalog format
 fc', as, ec, fpe, Pu, Mu, Vu, embodied
 """
-# function matchitnow()
+function matchitnow()
 catalog = CSV.read(joinpath(@__DIR__,"Outputs\\output_static.csv"), DataFrame);
 sort!(catalog, [:carbon, :ec])
 #test input
@@ -130,13 +130,9 @@ end
 element_designs
 
 final_designs = Vector{Vector}(undef, length(element_designs))
-for i in ne
-    dfs = Vector{DataFrame}()
-    sections = elements_to_sections[i]
-    for j in sections
-        push!(dfs, element_designs[j])
-    end
-    final_designs[i] = collect(innerjoin(dfs..., on = [:fc′,:as,:fpe], makeunique = true)[1,:])
+for i in 1:length(element_designs) 
+    # available_designs = sort(element_designs[i],[:]
+    final_designs[i] = Array{Float64,1}(element_designs[i][1,:])
 end
 
 
@@ -167,11 +163,11 @@ for i in eachindex(ne)
     start += ns
 end
 end
-# return f1
-# end
+return f1
+end
 
 
-#  matchitnow()
+ matchitnow()
 # save("section_design_trial_27102023.png", f1)
 
 

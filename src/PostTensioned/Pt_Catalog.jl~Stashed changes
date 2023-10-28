@@ -24,7 +24,7 @@ include("ptFunc.jl")
 #            length(range_fpe) * length(range_ec) * length(range_as) * (idx_fc′ - 1)
 # end
 """
-Map n dimentional vector into an index.
+Map an n dimentional vector into an index.
 """
 function mapping(n::Vector{Int64}, idx::Vector{Int64})
     d = Vector{Int64}(undef, length(n))
@@ -73,22 +73,23 @@ function get_capacities(fc′, as, ec, fpe,L,t,Lc;
     #Calculation starts here.
 
     if T == "Beam"
-        section = make_Y_layup_section(L, t, Lc)
+        sections = make_Y_layup_section(L, t, Lc)
 
-        ac = section.area
         # y, A = depth_map(compoundsection, 250)
 
     elseif T == "Column"
-        section = make_X2_layup_section(L, t, Lc)
+        sections = make_X2_layup_section(L, t, Lc)
         #also have to do x4, but will see.
         # section = make_X4_layup_section(L, t, Lc)
         # compoundsection = CompoundSection(section)
-        ac = section.area
+        # ac = sections.area
         # y, A = depth_map(compoundsection, 250)
     else
         println("Invalid type")
     end
 
+    compoundsection = CompoundSection(sections)
+    ac = compoundsection.area
     #load section properties file
     # filename = "pixel_$L_$t_$Lc.csv"
     # section = CSV.read(filename, header=true)
@@ -97,10 +98,9 @@ function get_capacities(fc′, as, ec, fpe,L,t,Lc;
     #Pure Compression Capacity
     ccn = 0.85 * fc′ * ac
     #need a justification on 0.003 Ep
-    pn = (ccn - (fpe - 0.003 * Ep) * as) / 1000 #[kN]
+    pn = (ccn - (fpe - 0.003 * Ep) * as) / 1000 # convert to [kN]
     pu = 0.65 * 0.8 * pn #[kN]
     ptforce = pu #[kN]
-
 
     #Pure Moment Capacity
 
@@ -117,9 +117,24 @@ function get_capacities(fc′, as, ec, fpe,L,t,Lc;
         println("Acomp exceeds Ac, using Ac instead")
         acomp = ac
     end
-    #rebar position measure from 0.0 down
+
+    #rebar position measure from 0.0 down, absolute values
     rebarpos = ec*(-L)
-    @show d = depth_from_area(section,acomp)
+    #depth is from the top.
+    c_depth = depth_from_area(compoundsection,acomp,show_stats = false )
+    ymax = compoundsection.ymax #global coordinate
+    c_depth_global = ymax - c_depth #global coordinate
+
+    new_sections = Vector{SolidSection}()
+    for sub_s in sections
+        sub_s_ymax = sub_s.ymax #global coordinate
+        c_depth_local = sub_s_ymax - c_depth_global 
+        if c_depth_local > 0
+             push!(new_sections, sutherland_hodgman(sub_s, c_depth_local, return_section = true))
+        end
+    end
+
+    cgcomp = CompoundSection(new_sections).centroid
 
     # depth, cgcomp= getprop(acomp, L, t, Lc)
     
@@ -129,34 +144,44 @@ function get_capacities(fc′, as, ec, fpe,L,t,Lc;
     #Recheck with concrete.
     #check compression strain, make sure it's not more than 0.003
     # c = depth
-    c = d
+    c = c_depth
     ϵs = fps / Ep
-    ϵc = c * ϵs / (rebarpos - c)
+    d = ymax-rebarpos
+    ϵc = c * ϵs / ( d - c)
 
     if ϵc > 0.003
-        # println("Compression strain is $ϵc which is more than 0.003")
-        #recalc based on the compression strain
-        #calculate the new compression area based on the strain
+        # Compression strain is more than 0.003
+        # recalc based on the compression strain = 0.003
+        # ϵs now will be lower than 0.005
+
         #first find depth based on the 0.003 strain at the top
 
         ϵc_new = 0.003
-        depth = L #first guess
+        c = L/2 #first guess
         tol = 0.001
 
         while tol > 0.001
-            ϵs_new = ϵc_new*(rebarpos - depth) / depth
+            ϵs_new = ϵc_new*(d - c) / c
             fps_new = ϵs_new * Ep
-
             acomp = as * fps_new / (0.85 * fc′)
-            
-            # depth_new, cgcomp= getprop(acomp, L, t, Lc)
-            tol = abs(depth_new - depth)/depth
-            depth = depth_new
+            c_depth = depth_from_area(compoundsection,acomp,show_stats = false )
+            tol = abs(c_depth - c)/c
         end
     end
-    cgcomp = 100 #dummy
-    arm = cgcomp - rebarpos
-        #moment arm of the section is the distance between the centroid of the compression area and the steel.
+    c_depth_global = ymax - c_depth
+    new_sections = Vector{SolidSection}()
+    for sub_s in sections
+        sub_s_ymax = sub_s.ymax
+        c_depth_local = sub_s_ymax - c_depth_global
+        if c_depth_local > 0
+                push!(new_sections, sutherland_hodgman(sub_s, c_depth_local, return_section = true))
+        end
+    end
+    
+    cgcomp = CompoundSection(new_sections).centroid
+
+    arm = cgcomp[2] - rebarpos
+    #moment arm of the section is the distance between the centroid of the compression area and the steel.
 
     mn = 0.85 * fc′ * ac * arm / 1e6 #[kNm]
     mu = Φ(ϵs) * mn #[kNm]
@@ -207,18 +232,18 @@ function get_capacities(fc′, as, ec, fpe,L,t,Lc;
 end
 
 
-function get_catalog()
-    L = 102.5
-    t = 17.5
+function get_catalog(test::Bool)
+    L  = 200.0
+    t  = 17.5
     Lc = 15.0
-    return get_catalog(L,t,Lc)
+    return get_catalog(L,t,Lc, run_test = test)
 end
 
 function get_catalog(L,t,Lc; run_test=true)
     if !run_test
-        range_fc′ = 28.:7.:56.
-        range_as = [99.0, 140.0]
-        range_ec = 0.5:0.1:1.2
+        range_fc′ = 28.:2.:56.
+        range_as = 50.0:10.0:140#[99.0, 140.0]
+        range_ec = 0.05:0.05:1.2
         range_fpe = (0.00:0.02:0.5) * 1860.0
     else
         #test
@@ -259,17 +284,22 @@ function get_catalog(L,t,Lc; run_test=true)
     end
     df = DataFrame(results , [ :fc′, :as,:ec,:fpe,:Pu,:Mu, :Vu, :carbon])
     df[!,:ID] = 1:total_s
+    println("Got Catalog with $total_s outputs")
     return df# results # DataFrame(results)
 end
 
 #test
-results_test = get_catalog()
-results = get_catalog(100,10,10,run_test=false)
-# 11.147s , 575.72 MiB allocation
-date = Dates.today()
-time = Dates.now()
+# results_test = get_catalog()
+# results = get_catalog(100,10,10,run_test=false)
+# # 11.147s , 575.72 MiB allocation
+# date = Dates.today()
+# time = Dates.now()
 
-CSV.write(joinpath(@__DIR__,"Outputs\\output_$date.csv"), results)
+# CSV.write(joinpath(@__DIR__,"Outputs\\output_$date.csv"), results)
+
+results = get_catalog(false)
+
+CSV.write(joinpath(@__DIR__,"Outputs\\output_static.csv"), results)
 
 
 # calcap(28., 99.0, 0.5, 1600.0)

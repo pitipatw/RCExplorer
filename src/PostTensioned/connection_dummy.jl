@@ -162,7 +162,7 @@ for i in eachindex(ne)
 end
 end
 f1
-
+save("section_design_trial_27102023.png", f1)
 
 
 

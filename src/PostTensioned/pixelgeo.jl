@@ -2,6 +2,7 @@ using LinearAlgebra
 using PolygonInbounds
 using GeometryTypes
 using StaticArrays
+using AsapSections
 
 """
 Turn a vector of vector into matrix
@@ -94,7 +95,7 @@ function make_Y_layup_section(L::Real, t::Real, Lc::Real; n = 10, offset = 0.)
 
     sections = SolidSection.([right_pixel, top_pixel, left_pixel])
 
-    return CompoundSection(sections)
+    return sections #CompoundSection(sections)
 end
 
 

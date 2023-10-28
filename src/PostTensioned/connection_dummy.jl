@@ -1,11 +1,13 @@
 using CSV, DataFrames, JSON
 using Dates
+using Makie, GLMakie
 include("Pt_Catalog.jl")
 
 """
 catalog format
 fc', as, ec, fpe, Pu, Mu, Vu, embodied
 """
+function matchitnow()
 catalog = CSV.read(joinpath(@__DIR__,"Outputs\\output_static.csv"), DataFrame);
 sort!(catalog, [:carbon, :ec])
 #test input
@@ -134,7 +136,7 @@ for i in 1:length(element_designs)
 end
 
 
-using Makie, GLMakie
+
 begin
 L = 200
 f1 = Figure(resolution = (1800,5000))
@@ -161,8 +163,12 @@ for i in eachindex(ne)
     start += ns
 end
 end
-f1
-save("section_design_trial_27102023.png", f1)
+return f1
+end
+
+
+ matchitnow()
+# save("section_design_trial_27102023.png", f1)
 
 
 

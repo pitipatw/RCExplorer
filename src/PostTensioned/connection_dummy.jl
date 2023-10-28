@@ -9,14 +9,28 @@ fc', as, ec, fpe, Pu, Mu, Vu, embodied
 catalog = CSV.read(joinpath(@__DIR__,"Outputs\\output_static.csv"), DataFrame);
 sort!(catalog, [:carbon, :ec])
 #test input
-open(joinpath(@__DIR__,"JSON\\small_test_input.json"), "r") do f
+open(joinpath(@__DIR__,"JSON\\test_input.json"), "r") do f
     global demands = DataFrame(JSON.parse(f, dicttype=Dict{String,Any}))
     ns = size(demands)[1]
     demands[!,:idx] = 1:ns
 end
+
 demands[!,"e_idx"] .+= 1
 demands[!, "s_idx"] .+=1
-
+e_idx = 1 
+for i in 1:size(demands)[1]
+    if i !=1
+        demands[i-1, :e_idx] = e_idx
+        if demands[i,:s_idx] < demands[i-1,:s_idx]
+            e_idx +=1 
+        end
+        
+    end
+    if i == size(demands)[1]
+        demands[i, :e_idx] = e_idx
+    end
+end
+demands
 # function match_demands(demands, catalog)
 # sections_per_element = Dict( k => 0 for k in unique(demands[!, "e_idx"]))
 elements_to_sections = Dict(k=> Int[] for k in unique(demands[!,"e_idx"]))
@@ -60,7 +74,7 @@ end
 # return output_results
 # end
 
-output_results = match_demands(demands,catalog)
+# output_results = match_demands(demands,catalog)
 
 """
 Find the optimum result for each element. 
@@ -113,14 +127,41 @@ for i in ne #loop each element
 end
 element_designs
 
-final_designs = Vector{DataFrame}(undef, length(element_designs))
-for i in 1:length(element_designs)
-    final_designs[i] = DataFrame(element_designs[i][1,:])
+final_designs = Vector{Vector}(undef, length(element_designs))
+for i in 1:length(element_designs) 
+    # available_designs = sort(element_designs[i],[:]
+    final_designs[i] = Array{Float64,1}(element_designs[i][1,:])
 end
 
 
+using Makie, GLMakie
+begin
+L = 200
+f1 = Figure(resolution = (1800,5000))
+Axes = Vector{Axis}(undef, length(ne))
+n = 3
+m = 4
+start = 1
+for i in eachindex(ne)
+    e = ne[i]
+    #find how many elements in that section.
+    sections = elements_to_sections[e]
+    @show ns = length(sections)
+    ix = div(i-1,n)+1
+    iy = mod(i-1,n)
+    # @show (ix,iy)
+    Axes[e] = Axis(f1[ix,iy], aspect = DataAspect(), title = "$e", xticks = 0:100:(ns*50),
+    #limits = (0,(ns+1)*50,-L,10)
+    )
+    lines!(Axes[e], 50 .* (1:ns), -L.*(getindex.(final_designs[start:start+ns-1],3)))
+    text!( (10,-125), text = join(getindex.(final_designs[start:start+ns-1],1), " - "))
 
-
+    text!((10,-150), text = join(getindex.(final_designs[start:start+ns-1],2)," - ") )
+    text!((10,-175), text = join(getindex.(final_designs[start:start+ns-1],4)," - "))
+    start += ns
+end
+end
+f1
 
 
 

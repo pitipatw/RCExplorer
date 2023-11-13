@@ -48,6 +48,7 @@ begin
     Mdec = ps_force*em
     concrete_force = ps_force*cos(24.0*pi/180.0)
     fpe = ps_force/Aps # Effective post tensioning stress [MPa] ***will input the one on the test day***
+    println("fpe/fpu = ", fpe/1860)
     ϵpe = fpe / Eps # Effective post tensioning strain [mm/mm]
     #find moment due to the applied force.
     ϵce = ps_force*em/Zb/Ec - concrete_force/Atr/Ec # effetive strain in the concrete [mm/mm]

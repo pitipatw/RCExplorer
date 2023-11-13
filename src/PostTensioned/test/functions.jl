@@ -153,10 +153,10 @@ function getΩc(Ω::Float64, Icr::Float64, Lc::Float64, Sec::Section)
     # println("L = $L")
 
     if Ld < Ls
-        if (L - 2 * Ls) < Lc < (L - 2 * Ld)
+        if (L - 2 * Ls) < Lc < (L - 2 * Ld) #21a
             Ωc = Ω * Icr / Itr + (1 - Icr / Itr) *
                                  (1 - L / (4 * Ls) + Lc / (2 * Ls) - Lc^2 / (4 * L * Ls) - Ls / L)
-        elseif Lc >= L - 2 * Ld
+        elseif Lc >= L - 2 * Ld #21b
             Ωc = Ω * Icr / Itr + (1 - Icr / Itr) *
                                  (1 - Ls / L - Ld^2 / (L * Ls) +
                                   (1 - es / em) * (L * Lc / (4 * Ld * Ls) - Lc^2 / (4 * Ld * Ls) +
@@ -165,7 +165,7 @@ function getΩc(Ω::Float64, Icr::Float64, Lc::Float64, Sec::Section)
         else
             println("Warning: Lc is out of range")
         end
-    elseif Ld >= Ls
+    elseif Ld >= Ls #21c
         Ωc = Ω * Icr / Itr + (1 - Icr / Itr) *
                              (1 - 2 * Ls / L +
                               (1 - es / em) * (L * Lc / (4 * Ld * Ls) - Lc^2 / (4 * Ld * Ls) +

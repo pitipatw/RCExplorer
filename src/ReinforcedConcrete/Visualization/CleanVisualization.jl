@@ -9,7 +9,7 @@ set_theme!(kjl_light)
 """
 Visualize the design space
 """
-function VizCatalog(catalog)
+function VisCatalog(catalog)
     #set boundaries for plot
     Mu_min = minimum(catalog[!,:Mu])/1e6
     Mu_max = maximum(catalog[!,:Mu])/1e6
@@ -130,55 +130,8 @@ end
 f13d, pareto = VizCatalog_min(catalog)
 # save("catalog13D.png", f13d)
 
-"""
-Visualize the design space
-"""
-function VizCatalog_section(catalog)
-    #set boundaries for plot
-    Mu_min = minimum(catalog[!,:Mu])/1e6
-    Mu_max = maximum(catalog[!,:Mu])/1e6
-    fc′_min = minimum(catalog[!, :fc′])
-    fc′_max = maximum(catalog[!, :fc′])
-    area_min = minimum(catalog[!, :Area])
-    area_max = maximum(catalog[!, :Area])
-    ρ_min = minimum(catalog[!, :ρ])
-    ρ_max = maximum(catalog[!, :ρ])
-    gwp_min = minimum(catalog[!,:Gwp])
-    gwp_max = maximum(catalog[!,:Gwp])
 
-    #get for each Mu, get minimum gwp designs.
-
-   
-    figure1 = Figure(resolution = (600,600), backgroundcolor = :grey)
-    ax1 = Axis(figure1[1,1], title = "Section Plot"
-    ,xlabel = "Mu [kNm]", ylabel = "gwp [kgCO2e/kg.m]",
-    limits = (0,Mu_max+10,0,1.1*gwp_max))
-    slider1 = Slider(figure1[1,2], range = 1:maximum(catalog[!,:Section_ID]), startvalue =1,horizontal = false)
-    
-    x1 = Observable(catalog[!, :Mu]/1e6)
-    y1 = Observable(catalog[!, :Gwp])
-    c1 = Observable(catalog[!, :fc′])
-    lift(slider1.value) do n
-        new_cat = filter(:Section_ID => x-> x == n, catalog)
-        # x[] = Point2f.(vcat.(new_cat[!,:area], new_cat[!,:gwp]))
-        x1.val = new_cat[!,:Mu]/1e6
-        y1[] = new_cat[!,:Gwp]
-        c1[] = new_cat[!,:fc′]
-        # @show x1.val[end]
-
-        # z[] = new_cat[!,:fc′]
-        # title_name[] = string(n)
-        println(size(new_cat))
-        return new_cat[!, :Mu], new_cat[!, :Gwp]
-    end
-    s1 = scatter!(ax1, x1,y1, color = c1, strokewidth=0, colorrange = (fc′_min,fc′_max))
-    Colorbar(figure1[2,1], s1, label = "fc′ [MPa]", labelrotation =0, vertical = false)
-
-    # pairplot(catalog[!, [:Gwp]], catalog[!, [:fc′, :Area,:Mu, :Pu, :ρ]])
-    return figure1
-end
-VizCatalog_section(catalog)
-
+save
 
 f3 = VizCatalog_with_lines(catalog)
 
@@ -196,9 +149,9 @@ function VizCatalog_by_section(catalog)
     ax2 = Axis(figure1[1,2],
     xlabel = "Mu [kNm]", ylabel = "GWP kgCO2e/kg")
     fc′s = getfield.(catalog[!,:Section], :fc′)
-    s1 = scatter!(ax1, catalog[!, :Mu]/1e6, catalog[!, :Gwp], color = fc′s)
-    s2 = scatter!(ax2, catalog[!, :Mu]/1e6, catalog[!, :Gwp], color = catalog[!, :Section_ID], #.+ fc′s./maximum(fc′s)/2,
-    colormap = cgrad(:Spectral,ns, categorical = true), 
+    s1 = scatter!(ax1, catalog[!, :Mu]/1e6, catalog[!, :Gwp], color = fc′s, strokewidth = 0 )
+    s2 = scatter!(ax2, catalog[!, :Mu]/1e6, catalog[!, :Gwp], color = catalog[!, :Area], #.+ fc′s./maximum(fc′s)/2,
+    colormap = cgrad(:Spectral,ns, categorical = true), strokewidth = 0
     # opacity =  fc′s./maximum(fc′s)
     )
     Colorbar(figure1[2,1], s1, label = "fc′", vertical = false)

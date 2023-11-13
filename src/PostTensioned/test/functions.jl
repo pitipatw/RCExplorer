@@ -1,22 +1,22 @@
 """
-(3) 
-Only calculate once
+eq.(3) 
+Calculating the Moment crack of the given Beam
 """
 function getMcr(Mat::Material, Sec::Section, f::Loads, Ω::Float64)
     @unpack fc′, Ec, Eps, fpy = Mat
     @unpack Aps, Atr, Itr, Zb, em = Sec
     @unpack w, mg, fr, r, fpe = f
 
-
-    @show mcre = Aps * fpe * (em + Zb / Atr) + (fr * Zb) # Cracking moment due to initial effective prestress (mcre)
-    @assert mcre > 0 # mcre should be positive
-    @show dmcr = (Aps * em * (em + Zb / Atr) * (mcre - mg)) / ((1 / Ω * Itr * Ec / Eps) + Aps * (r^2 - em * Zb / Atr)) # Moment due to stress increase in external tendons.
-    @assert dmcr > 0
-    mcr = mcre + dmcr
-    return mcr
+    @show Mcrₑ = Aps * fpe * (em + Zb / Atr) + (fr * Zb) # Cracking moment due to initial effective prestress (Mcrₑ)
+    @assert Mcrₑ > 0 # Mcrₑ should be positive
+    @show ΔMcr = (Aps * em * (em + Zb / Atr) * (Mcrₑ - mg)) / ((1 / Ω * Itr * Ec / Eps) + Aps * (r^2 - em * Zb / Atr)) # Moment due to stress increase in external tendons.
+    @assert ΔMcr > 0
+    Mcr = Mcrₑ + ΔMcr
+    return Mcr
 end
+
 """
-(12)
+Eq.14
 """
 function getDelta(Mat::Material, Sec::Section, f::Loads, Itr::Float64, M::Float64, e::Float64, fps::Float64)
 
@@ -26,30 +26,42 @@ function getDelta(Mat::Material, Sec::Section, f::Loads, Itr::Float64, M::Float6
 
     #displacement 
     # due to the PS force
-    #at mid span
-    δ_mid⁻ = fps * Aps / (Ec * Itr) * (em * L^2 / 8 - (em - es) * Ls^2 / 6)
-    # at deviator 
-    δ_dev⁻ = fps * Aps / (Ec * Itr) * (es * Ls^2 / 6 + em * (L * Ls / 2 - 2 / 3 * Ls^2))
+    #at mid span (eq.8)
+    δ_mid⁻ = fps * Aps / (Ec * Itr) * (em * L^2 / 8 - (em - es) * Ld^2 / 6)
+    # at deviator (eq.9)
+    δ_dev⁻ = fps * Aps / (Ec * Itr) * (es * Ld^2 / 6 + em * (L * Ld / 2 - 2 / 3 * Ld^2))
 
     # due to the applied force
-    #at the mid span
+    #at the mid span (eq.10)
     δ_mid⁺ = M * L^2 / (6 * Ec * Itr) * (3 / 4 - (Ls / L)^2)
-    # at a deviator
-    δ_dev⁺ = M * L^2 / (6 * Ec * Itr) * (3 * (Ls / L) * (1 - Ls / L) - (Ls / L)^2)
 
+    # at a deviator (eq.11)
+    if Ld < Ls # eq 11a
+        δ_dev⁺ = M * L^2 / (6 * Ec * Itr) * (3 * (Ld / L) * (1 - Ls / L) - (Ld/Ls)*(Ld / L)^2)
+    elseif Ld >= Ls # eq 11b
+        δ_dev⁺ = M * L^2 / (6 * Ec * Itr) * (3 * (Ld / L) * (1 - Ld / L) - (Ls / L)^2)
+    
+
+    # eq 12
     δ_mid = δ_mid⁺ - δ_mid⁻
 
     δ_mid_cal = M * L^2 / (6 * Ec * Itr) * (3 / 4 - (Ls / L)^2) - fps * Aps / (Ec * Itr) * (e * L^2 / 8 - (e - es) * Ls^2 / 6)
     # @show Itr
     # @show δ_mid, δ_mid_cal
     @assert abs(δ_mid - δ_mid_cal) < 1e-6
+
     δ_dev = δ_dev⁺ - δ_dev⁻
 
     Δ = δ_mid - (δ_dev⁺ - δ_dev⁻)
     @assert Δ == δ_mid - δ_dev
 
-    K1 = Ls / L - 1
-    K2 = 0.0
+    if Ld < Ls
+        K1 = Ls / L - 1
+        K2 = (Ld/Ls)*(Ld/L)^2 - (Ls/L)^2
+    elseif Ld >= Ls 
+        K1 = Ld / L - 1
+        K2 = 0.0
+
     Δcalc = M * L^2 / (6 * Ec * Itr) * (3 * (Ls / L) * K1 + 3 / 4 + K2) - fps * Aps * e / (Ec * Itr) * (L^2 / 8 - L * Ls / 2 + Ls^2 / 2)
 
     # @show Δ - Δcalc
@@ -58,6 +70,9 @@ function getDelta(Mat::Material, Sec::Section, f::Loads, Itr::Float64, M::Float6
     e = (em + M * L^2 / (6 * Ec * Itr) * (3 * Ld / L * (-K1) - 3 / 4 - K2)) / (1 - fps * Aps / (Ec * Itr) * (L^2 / 8 - L * Ld / 2 + Ld^2 / 2))
     # println(e, e1)
     # @assert e == e1
+
+
+    #Third point loading  use eq 17 and 18 with k1 k2 k3 in table1 
     return δ_mid, δ_dev, e
 end
 

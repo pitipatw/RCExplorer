@@ -10,52 +10,77 @@ begin
     #Units N, mm, MPa
 
     #   Material Properties
-    fc′ = 36.0 # Concrete strength [MPa] ****Should update on the test day using cylinder test***
-    # Ec = 4700.0*sqrt(fc′) # MPa  ACI fc-> Concrete modulus relationship [MPa]
-    Ec = 58000.0 # MPa  from the cylinder test
+    fc′ = 34.5 # Concrete strength [MPa] ****Should update on the test day using cylinder test***
+    Ec = 4700.0*sqrt(fc′) # MPa  ACI fc-> Concrete modulus relationship [MPa]
+    # Ec = 58000.0 # MPa  from the cylinder test
     Eps = 70000.0 #Post tensioning steel modulus [MPa]
-    fpy = 0.002 * Eps #MPa  
+    # fpy = 0.002 * Eps #MPa  
+
+    #Longitudinal
+    fpy = 530.0 #MPa
+    f′y = 338.0 #MPa
+
+    #Stirrup
+    fy_R6 = 320.0 #MPa
+    fy_R8 = 338.0 #MPa
     #Safe load on the website https://www.engineeringtoolbox.com/wire-rope-strength-d_1518.html 
     # is ~ 150 MPa. Currently 140 MPa :)
 
-    # PixelFrame section/element properties
-    centroid_to_top = 91.5 #[mm]
-    em = 230.0 # Eccentricity at the middle of the member [mm]
+    # RC section/element properties
+    # Atr = 18537.69 # Transformed area of the cross section [mm2]
+    A1 = 300*50
+    A2 = 110.0*(265.0-50.0)
+    Atr = A1 + A2
+
+    centroid = (A1*50/2 + A2*(50+(265-50)/2))/Atr
+    I1 = 1/12*300*50^3
+    I2 = 1/12*110*(265-50)^3
+    d1 = centroid - 25 
+    d2 = 50 + (265-50)/2 - centroid
+    Itr = I1 + A1*d1^2 + I2 + A2*d2^2
+    # Itr = 1.082e+8 
+    # centroid_to_top = 91.5 #[mm]
+    dps0 = 200.0 # Initial distance from the top to the point of application of the load [mm]
+    em = dps0 - centroid # Eccentricity at the middle of the member [mm]
     es = 0.0 # Eccentricity at the support of the member   [mm]
     em0 = em # Initial eccentricity at the midspan        [mm]
-    dps0 = centroid_to_top + em0 # Initial distance from the top to the point of application of the load [mm]
-    Ls = 502.7 # Distance from support to the first load point [mm]
-    Ld = Ls    # Distance from support to the first deviator [mm]
-    L = 2000.0 # Total length of the member [mm]
-    # two 1/4" bars with 1200 lb capacity
-    Aps = 2.0 * (0.25 * 25.4)^2 * pi / 4.0 # Total area of the post tensioned steel [mm2]
- 
-    Atr = 18537.69 # Transformed area of the cross section [mm2]
-    Itr = 6.4198e+07 #moment of inertia [mm4]
-    # Itr = 1.082e+8 
 
-    Zb = Itr/centroid_to_top # Elastic modulus of the concrete section from the centroid to extreme tension fiber [mm3]
+    L = 7.5*dps0 # Total length of the member [mm]
+    Ls = L/3 # Distance from support to the first load point [mm]
+    Ld = L/2    # Distance from support to the first deviator [mm]
+    # two 1/4" bars with 1200 lb capacity
+    # Aps = 2.0 * (0.25 * 25.4)^2 * pi / 4.0 # Total area of the post tensioned steel [mm2]
+    # Aps = 2.0 * (12.9)^2*pi/4 # Total area of the post tensioned steel [mm2]
+    Aps = 201.0 #mm2
+    fpu = 1900.0 #MPa
+    fpe = 0.4*fpu #MPa
+
+
+
+
+    Zb = Itr/centroid # Elastic modulus of the concrete section from the centroid to extreme tension fiber [mm3]
     # If there are multiple materials, transformed section geometry is needed for Zb (and everything related to section area)
-    sr = 0.4 #Approx ratio of the area that resitst shear.
+    # sr = 0.4 #Approx ratio of the area that resitst shear.
 
     #forces
     w = Atr / 10^9 * 2400.0 * 9.81 # Selfweight [N/mm]
     mg = w * L^2 / 8.0 # Moment due to selfweight [Nmm]
     fr = 0.7 * sqrt(fc′) # Concrete cracking strenght [MPa]
     r = sqrt(Itr / Atr) # Radius of gyration [mm]
-    ps_force = 890.0/sind(24.0)
+    # ps_force = 890.0/sind(24.0)
+    ps_force = Aps*fpe
          # Post tensioning force [N]
     Mdec = ps_force*em
-    concrete_force = ps_force*cos(24.0*pi/180.0)
-    fpe = ps_force/Aps # Effective post tensioning stress [MPa] ***will input the one on the test day***
+    concrete_force = ps_force #*cos(24.0*pi/180.0)
+    # fpe = ps_force/Aps # Effective post tensioning stress [MPa] ***will input the one on the test day***
     println("fpe/fpu = ", fpe/1860)
     ϵpe = fpe / Eps # Effective post tensioning strain [mm/mm]
     #find moment due to the applied force.
     ϵce = ps_force*em/Zb/Ec - concrete_force/Atr/Ec # effetive strain in the concrete [mm/mm]
 
     #Paramter for shear calculation
-    fR3 = 3.5 
-    fR1 = 4.0 
+    # fR3 = 3.5 
+    # fR1 = 4.0 
 
 end
 

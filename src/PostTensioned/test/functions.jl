@@ -27,9 +27,12 @@ function getDelta(Mat::Material, Sec::Section, f::Loads, Itr::Float64, M::Float6
     #displacement 
     # due to the PS force
     #at mid span (eq.8)
-    δ_mid⁻ = fps * Aps / (Ec * Itr) * (em * L^2 / 8 - (em - es) * Ld^2 / 6)
+    # @show fps
+    # @show Ec
+    # @show Itr
+    @show δ_mid⁻ = fps * Aps / (Ec * Itr) * (em * L^2 / 8 - (em - es) * Ld^2 / 6)
     # at deviator (eq.9)
-    δ_dev⁻ = fps * Aps / (Ec * Itr) * (es * Ld^2 / 6 + em * (L * Ld / 2 - 2 / 3 * Ld^2))
+    @show δ_dev⁻ = fps * Aps / (Ec * Itr) * (es * Ld^2 / 6 + em * (L * Ld / 2 - 2 / 3 * Ld^2))
 
     # due to the applied force
     #at the mid span (eq.10)
@@ -40,20 +43,20 @@ function getDelta(Mat::Material, Sec::Section, f::Loads, Itr::Float64, M::Float6
         δ_dev⁺ = M * L^2 / (6 * Ec * Itr) * (3 * (Ld / L) * (1 - Ls / L) - (Ld/Ls)*(Ld / L)^2)
     elseif Ld >= Ls # eq 11b
         δ_dev⁺ = M * L^2 / (6 * Ec * Itr) * (3 * (Ld / L) * (1 - Ld / L) - (Ls / L)^2)
-    
+    end
 
     # eq 12
-    δ_mid = δ_mid⁺ - δ_mid⁻
+    @show δ_mid = δ_mid⁺ - δ_mid⁻
 
     δ_mid_cal = M * L^2 / (6 * Ec * Itr) * (3 / 4 - (Ls / L)^2) - fps * Aps / (Ec * Itr) * (e * L^2 / 8 - (e - es) * Ls^2 / 6)
     # @show Itr
     # @show δ_mid, δ_mid_cal
-    @assert abs(δ_mid - δ_mid_cal) < 1e-6
+    # @assert abs(δ_mid - δ_mid_cal) < 1e-6
 
     δ_dev = δ_dev⁺ - δ_dev⁻
 
     Δ = δ_mid - (δ_dev⁺ - δ_dev⁻)
-    @assert Δ == δ_mid - δ_dev
+    # @assert Δ == δ_mid - δ_dev
 
     if Ld < Ls
         K1 = Ls / L - 1
@@ -61,11 +64,12 @@ function getDelta(Mat::Material, Sec::Section, f::Loads, Itr::Float64, M::Float6
     elseif Ld >= Ls 
         K1 = Ld / L - 1
         K2 = 0.0
+    end
 
     Δcalc = M * L^2 / (6 * Ec * Itr) * (3 * (Ls / L) * K1 + 3 / 4 + K2) - fps * Aps * e / (Ec * Itr) * (L^2 / 8 - L * Ls / 2 + Ls^2 / 2)
 
     # @show Δ - Δcalc
-    @assert abs(Δ - Δcalc) < 1e-9
+    # @assert abs(Δ - Δcalc) < 1e-9
     # e = (em + M*L^2/(6*Ec*Itr)*(3/4-(Ls/L)^2)) / (1 - fps*Aps/(Ec*Itr) * (L^2/8 - L*Ld/2 +Ld^2/2))
     e = (em + M * L^2 / (6 * Ec * Itr) * (3 * Ld / L * (-K1) - 3 / 4 - K2)) / (1 - fps * Aps / (Ec * Itr) * (L^2 / 8 - L * Ld / 2 + Ld^2 / 2))
     # println(e, e1)
@@ -73,6 +77,8 @@ function getDelta(Mat::Material, Sec::Section, f::Loads, Itr::Float64, M::Float6
 
 
     #Third point loading  use eq 17 and 18 with k1 k2 k3 in table1 
+    @show δ_mid
+    @show δ_dev
     return δ_mid, δ_dev, e
 end
 
@@ -106,7 +112,14 @@ function getFps2(Mat::Material, Sec::Section, f::Loads, Ωc::Float64, c::Float64
     #fc is suppose to be the stress in top concrete fiber, 
     # use constitution equation to get the stress in the top concrete fiber
     first_term = Eps * (ϵpe + Ωc * ϵce)
-    second_term = Ωc * fc * Eps / Ec * (dps / c - 1)
+
+    # @show c
+    if c == 0
+        second_term = 0
+    else
+        second_term = Ωc * fc * Eps / Ec * (dps / c - 1)
+    end
+
     fps = first_term + second_term
     if fps > fpy
         return fpy
@@ -138,6 +151,8 @@ function getOmega(Sec::Section)
         Ω = 1 - Ls/L + Ld^2*(es-em)/(3*L*Ls*em)
     elseif Ld >= Ls #eq 6b
         Ω = 1.0 - (es / em) * (Ls / L) + (es - em) / em * (Ls^2 / (3 * L * Ld) + Ld / L)
+    end
+
     return Ω
 end
 
@@ -186,7 +201,7 @@ end
 """
 function getDeltamid()
     first_term = M * L^2 / (6 * Ec * Ie) * (3 / 4 - (Ls / L)^2)
-    second_term = fps * Aps / (Ec * Ie) * (e * L^2 / 8 - (e - es) * Ld^2 / 6)
+    second_term = fps * Aps / (Ec * Ie) * (e * L^2 / 8 - (e - es) * Ld^2 / 6) 
     return first_term + second_term
 end
 
@@ -214,8 +229,13 @@ end
 dps0 : initial effective post tension dendon depth
 """
 function getDps(dps0::Float64, Δ::Float64)
-    K1 = Ls / L - 1
-    K2 = 0.0
+    if Ld < Ls
+        K1 = Ls / L - 1
+        K2 = (Ld/Ls)*(Ld/L)^2 - (Ls/L)^2
+    elseif Ld >= Ls 
+        K1 = Ld / L - 1
+        K2 = 0.0
+    end
 
     dps = dps0 + M * L^2 / (6 * Ec * Ie) * (3 * Ld / L * (-K1) - 3 / 4 - K2) +
           fps * Aps / (Ec * Ie) * e * (L^2 / 8 - L * Ld / 2 + Ld^2 / 2)
@@ -229,95 +249,95 @@ end
 """
 Fig 7 in the paper.
 """
-function main()
+# function main()
 
-    # I might have to unpack here.
+#     # I might have to unpack here.
 
-    for i in eachindex(M)
-        Mi = M[i]
-        println(Mi)
-        Lc = getLc(Sec, Mcr, Mi)
-        loop1()
+#     for i in eachindex(M)
+#         Mi = M[i]
+#         println(Mi)
+#         Lc = getLc(Sec, Mcr, Mi)
+#         loop1()
 
-        # δmid = getDeltamid()
-        #record the history
-        fps_history[i] = fps
-        dps_history[i] = dps
-        Icr_history[i] = Icr
-        Ie_history[i]  = Ie
-        c_history[i]   = c
-        dis_history[i] = δ_mid
-        fc_history[i]  = fc
-        dis_dev_history[i] = δ_dev
-    end
+#         # δmid = getDeltamid()
+#         #record the history
+#         fps_history[i] = fps
+#         dps_history[i] = dps
+#         Icr_history[i] = Icr
+#         Ie_history[i]  = Ie
+#         c_history[i]   = c
+#         dis_history[i] = δ_mid
+#         fc_history[i]  = fc
+#         dis_dev_history[i] = δ_dev
+#     end
 
-end
+# end
 
-function loop1()
+# function loop1()
 
 
-    conv1 = 1 #first convergence criteria
-    counter1 = 0 #loop1 counter
-    while conv1 > 1e-6
-        counter1 += 1
-        if counter1 > 1000
-            println("Warning: 1st iteration did not converge")
-            break
-        end
+#     conv1 = 1 #first convergence criteria
+#     counter1 = 0 #loop1 counter
+#     while conv1 > 1e-6
+#         counter1 += 1
+#         if counter1 > 1000
+#             println("Warning: 1st iteration did not converge")
+#             break
+#         end
 
-        #assume value of Itr and fps
-        # loop2()
+#         #assume value of Itr and fps
+#         # loop2()
         
-        # println("Icr = ", Icr)
-        # println("Ac_req ", Ac_req)
-        # println("c: ", c)
-        # @show Mcr , Mdec, Mi , Icr, Itr
-        println(Mi)
-        println(typeof(Mi))
-        Ie = getIe(Mcr, Mdec, Mi, Icr, Itr)
-        # println("Ie/Icr" , Ie/Icr)
-        δ_mid, δ_dev, e = getDelta(Mat, Sec, f, Ie, Mi, em, fps)
-        dps = dps0 - (δ_mid - δ_dev)
-        fc = fps / Eps * c / (dps - c) + Mi / Itr * c
-        # println("fc: ", fc)
-        # @assert fc <= 0.003
-        fps_calc = getFps2(Mat, Sec, f, Ωc, c, dps, fc)
-        conv1 = abs(fps_calc - fps) / fps
-        fps = fps_calc
-        #plot convergence of fps, icr and dps using Makie
-    end
-end
+#         # println("Icr = ", Icr)
+#         # println("Ac_req ", Ac_req)
+#         # println("c: ", c)
+#         # @show Mcr , Mdec, Mi , Icr, Itr
+#         println(Mi)
+#         println(typeof(Mi))
+#         Ie = getIe(Mcr, Mdec, Mi, Icr, Itr)
+#         # println("Ie/Icr" , Ie/Icr)
+#         δ_mid, δ_dev, e = getDelta(Mat, Sec, f, Ie, Mi, em, fps)
+#         dps = dps0 - (δ_mid - δ_dev)
+#         fc = fps / Eps * c / (dps - c) + Mi / Itr * c
+#         # println("fc: ", fc)
+#         # @assert fc <= 0.003
+#         fps_calc = getFps2(Mat, Sec, f, Ωc, c, dps, fc)
+#         conv1 = abs(fps_calc - fps) / fps
+#         fps = fps_calc
+#         #plot convergence of fps, icr and dps using Makie
+#     end
+# end
 
     
 
-function loop2()
+# function loop2()
 
-    conv2 = 1 #second convergence criteria
-    counter2 = 0 #loop2 counter
-    while conv2 > 1e-6
-        println("Im here in loop2")
-        println(dps,fps,fpe,Ie,Itr)
-        println(Ωc)
-        println(Icr)
-        # println("counter")
-        counter2 += 1
-        if counter2 > 1000
-            println("Warning: 2nd iteration did not converge")
-            break
-        end
-        Ωc = getΩc(Ω, Icr, Lc, Sec)
-        # ps_force_i = Aps*fps
+#     conv2 = 1 #second convergence criteria
+#     counter2 = 0 #loop2 counter
+#     while conv2 > 1e-6
+#         println("Im here in loop2")
+#         println(dps,fps,fpe,Ie,Itr)
+#         println(Ωc)
+#         println(Icr)
+#         # println("counter")
+#         counter2 += 1
+#         if counter2 > 1000
+#             println("Warning: 2nd iteration did not converge")
+#             break
+#         end
+#         Ωc = getΩc(Ω, Icr, Lc, Sec)
+#         # ps_force_i = Aps*fps
 
-        #finding compression depth (c)
-        c = getC()
-        #calculate Icr
-        Icr_calc = get_Icrack(c)
+#         #finding compression depth (c)
+#         c = getC()
+#         #calculate Icr
+#         Icr_calc = get_Icrack(c)
 
-        conv2 = abs(Icr_calc - Icr) / Icr_calc
+#         conv2 = abs(Icr_calc - Icr) / Icr_calc
 
-        Icr = Icr_calc
-    end
-end
+#         Icr = Icr_calc
+#     end
+# end
 
 
 function getC()

@@ -12,10 +12,63 @@ using Makie, GLMakie
 
 # Setting up the data
 begin
-    include("input_data.jl")
+    include("input_data_ST1.jl")
     include("functions.jl")
-    include("Interpolations.jl")
+    # include("Interpolations.jl")
 end
+
+function get_C(A::Float64)
+    B = 300.0
+    b = 110.0
+    H = 265.0
+    h = 50.0
+    maxA = B*h + (H-h)*b
+    println(A)
+    if A <= B*h
+        C = A/B
+    elseif A > maxA 
+        C = H
+    elseif A > B*h
+        newA = A - B*h 
+        C = h + newA/b
+    end
+
+    return C
+
+end
+
+function get_Icrack(C::Float64)
+    B = 300.0
+    b = 110.0
+    H = 265.0
+    h = 50.0
+
+    A1 = B*h 
+    A2 = b*(H-h)
+
+    centroid = (A1*h/2 + A2*(H+h)/2)/Atr
+    I1 = 1/12*B*h^3
+    I2 = 1/12*b*H^3
+    d1 = centroid - h/2 
+    d2 = (h+H)/2 - centroid
+    Itr = I1 + A1*d1^2 + I2 + A2*d2^2 
+
+    if C <= h 
+        I = 1/12*B*C
+    elseif C > H 
+        I = Itr
+    elseif C <= H
+        A2 = b*(C-h)
+        centroid = (A1*h/2 + A2*(C+h)/2)/(A1+A2)
+        I2 = 1/12*b*(C-h)^3
+        d1 = centroid - h/2 
+        d2 = (h+C)/2 - centroid
+        I = I1 + A1*d1^2 + I2 + A2*d2^2 
+    end
+
+    return I
+end
+
 
 # from the paper
 # Since sections are usually under-reinforced, the behavior will govern by the steel yielding. 
@@ -40,7 +93,7 @@ begin
     # #try
     # P_lb = 0:st:10000
     P_N  = 4.448*P_lb # [N]
-
+    P_N  = 0:1000:400_000
     P = P_N # This depends on what unit you want to use in the calculation.
     M = P*Ls/2.0 #given M inputs
 end
@@ -129,7 +182,8 @@ for i in eachindex(M)
                     break
                 end
                 #centroid of concrete area might not be at c/2
-                Ac_req = Mi/(dps-c/2)/(0.85*fc′)
+                @show Mi
+                @show Ac_req = Mi/(dps-c/2)/(0.85*fc′)
             
                 # Ac_req = ps_force_i /0.85/fc′
                 new_c = get_C(Ac_req)
@@ -210,7 +264,7 @@ begin
 end
         
 axis_monitor1 = [Axis(ga[i,1], title = title_name1[i],ylabel = y1[i], xlabel = x1[i]) for i in 1:5]
-axis_monitor2 = [Axis(gb[i,1],title = title_name2[i],ylabel = y2[i], xlabel = x2[i], yticks = -400000.:2500:40000)  for i in 1:2]
+axis_monitor2 = [Axis(gb[i,1],title = title_name2[i],ylabel = y2[i], xlabel = x2[i])  for i in 1:2]
 scatter!(axis_monitor1[1], P, dps_history, color = :red)
 scatter!(axis_monitor1[2], P, fps_history, color = :red)
 # scatter!(axis_monitor1[2], P, fc_history, color = :blue)
@@ -237,25 +291,25 @@ fig1
 
 #compare the result with the test data.
 begin
-df = CSV.File(joinpath(@__DIR__,"pixelframe_beam1.csv"))
-df = DataFrame(df)
-test_P = df[!,2]
-test_d = df[!,3]
+# df = CSV.File(joinpath(@__DIR__,"pixelframe_beam1.csv"))
+# df = DataFrame(df)
+# test_P = df[!,2]
+# test_d = df[!,3]
 
 # convert to in to mm
-test_d = test_d .* 25.4
+# test_d = test_d .* 25.4
 
-test_P = test_P .* 4.44822
+# test_P = test_P .* 4.44822
 
 # figure2 = Figure(resolution = (800, 600))
 # ax1 = Axis(figure2[1, 1], ylabel = "Load [lb]", xlabel = "Displacement [in]")
 # ax2 = Axis(figure2[2, 1], ylabel = "fps[MPa]", xlabel = "Displacement [in]")
 
 plot!(axis_monitor2[1],dis_history[1:end],P[1:end], label = "calc", color = :blue)
-plot!(axis_monitor2[1],test_d,test_P, label = "test", color = :red)
+# plot!(axis_monitor2[1],test_d,test_P, label = "test", color = :red)
 
-plot!(axis_monitor2[2],dis_history[1:end],P[1:end].-Mcr*2/Ls, label = "calc", color = :blue)
-plot!(axis_monitor2[2],test_d,test_P, label = "test", color = :red)
+# plot!(axis_monitor2[2],dis_history[1:end],P[1:end].-Mcr*2/Ls, label = "calc", color = :blue)
+# plot!(axis_monitor2[2],test_d,test_P, label = "test", color = :red)
 # display(fig_monitor)
 
 

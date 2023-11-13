@@ -77,7 +77,7 @@ function getDelta(Mat::Material, Sec::Section, f::Loads, Itr::Float64, M::Float6
 end
 
 """
-(19)
+(eq 19)
 """
 function getFps1(Mat::Material, Sec::Section, f::Loads, Ωc::Float64, c::Float64, dps::Float64)
 
@@ -128,9 +128,16 @@ function getLc(Sec::Section, Mcr::Float64, M::Float64)
     end
 end
 
+"""
+eq 6
+"""
 function getOmega(Sec::Section)
     @unpack em, es, Ls, Ld, L = Sec
-    Ω = 1.0 - (es / em) * (Ls / L) + (es - em) / em * (Ls^2 / (3 * L * Ld) + Ld / L)
+
+    if Ld < Ls #eq 6a
+        Ω = 1 - Ls/L + Ld^2*(es-em)/(3*L*Ls*em)
+    elseif Ld >= Ls #eq 6b
+        Ω = 1.0 - (es / em) * (Ls / L) + (es - em) / em * (Ls^2 / (3 * L * Ld) + Ld / L)
     return Ω
 end
 

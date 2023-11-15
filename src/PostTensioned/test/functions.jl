@@ -40,7 +40,7 @@ function getDelta(Mat::Material, Sec::Section, f::Loads, Itr::Float64, M::Float6
 
     # at a deviator (eq.11)
     if Ld < Ls # eq 11a
-        δ_dev⁺ = M * L^2 / (6 * Ec * Itr) * (3 * (Ld / L) * (1 - Ls / L) - (Ld/Ls)*(Ld / L)^2)
+        δ_dev⁺ = M * L^2 / (6 * Ec * Itr) * (3 * (Ld / L) * (1 - Ls / L) - (Ld / Ls) * (Ld / L)^2)
     elseif Ld >= Ls # eq 11b
         δ_dev⁺ = M * L^2 / (6 * Ec * Itr) * (3 * (Ld / L) * (1 - Ld / L) - (Ls / L)^2)
     end
@@ -60,8 +60,8 @@ function getDelta(Mat::Material, Sec::Section, f::Loads, Itr::Float64, M::Float6
 
     if Ld < Ls
         K1 = Ls / L - 1
-        K2 = (Ld/Ls)*(Ld/L)^2 - (Ls/L)^2
-    elseif Ld >= Ls 
+        K2 = (Ld / Ls) * (Ld / L)^2 - (Ls / L)^2
+    elseif Ld >= Ls
         K1 = Ld / L - 1
         K2 = 0.0
     end
@@ -148,7 +148,7 @@ function getOmega(Sec::Section)
     @unpack em, es, Ls, Ld, L = Sec
 
     if Ld < Ls #eq 6a
-        Ω = 1 - Ls/L + Ld^2*(es-em)/(3*L*Ls*em)
+        Ω = 1 - Ls / L + Ld^2 * (es - em) / (3 * L * Ls * em)
     elseif Ld >= Ls #eq 6b
         Ω = 1.0 - (es / em) * (Ls / L) + (es - em) / em * (Ls^2 / (3 * L * Ld) + Ld / L)
     end
@@ -201,7 +201,7 @@ end
 """
 function getDeltamid()
     first_term = M * L^2 / (6 * Ec * Ie) * (3 / 4 - (Ls / L)^2)
-    second_term = fps * Aps / (Ec * Ie) * (e * L^2 / 8 - (e - es) * Ld^2 / 6) 
+    second_term = fps * Aps / (Ec * Ie) * (e * L^2 / 8 - (e - es) * Ld^2 / 6)
     return first_term + second_term
 end
 
@@ -231,8 +231,8 @@ dps0 : initial effective post tension dendon depth
 function getDps(dps0::Float64, Δ::Float64)
     if Ld < Ls
         K1 = Ls / L - 1
-        K2 = (Ld/Ls)*(Ld/L)^2 - (Ls/L)^2
-    elseif Ld >= Ls 
+        K2 = (Ld / Ls) * (Ld / L)^2 - (Ls / L)^2
+    elseif Ld >= Ls
         K1 = Ld / L - 1
         K2 = 0.0
     end
@@ -287,7 +287,7 @@ Fig 7 in the paper.
 
 #         #assume value of Itr and fps
 #         # loop2()
-        
+
 #         # println("Icr = ", Icr)
 #         # println("Ac_req ", Ac_req)
 #         # println("c: ", c)
@@ -308,7 +308,7 @@ Fig 7 in the paper.
 #     end
 # end
 
-    
+
 
 # function loop2()
 

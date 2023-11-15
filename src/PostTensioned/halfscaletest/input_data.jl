@@ -29,12 +29,12 @@ begin
     L = 2000.0 # Total length of the member [mm]
     # two 1/4" bars with 1200 lb capacity
     Aps = 2.0 * (0.25 * 25.4)^2 * pi / 4.0 # Total area of the post tensioned steel [mm2]
- 
+
     Atr = 18537.69 # Transformed area of the cross section [mm2]
     Itr = 6.4198e+07 #moment of inertia [mm4]
     # Itr = 1.082e+8 
 
-    Zb = Itr/centroid_to_top # Elastic modulus of the concrete section from the centroid to extreme tension fiber [mm3]
+    Zb = Itr / centroid_to_top # Elastic modulus of the concrete section from the centroid to extreme tension fiber [mm3]
     # If there are multiple materials, transformed section geometry is needed for Zb (and everything related to section area)
     sr = 0.4 #Approx ratio of the area that resitst shear.
 
@@ -43,19 +43,19 @@ begin
     mg = w * L^2 / 8.0 # Moment due to selfweight [Nmm]
     fr = 0.7 * sqrt(fc′) # Concrete cracking strenght [MPa]
     r = sqrt(Itr / Atr) # Radius of gyration [mm]
-    ps_force = 890.0/sind(24.0)
-         # Post tensioning force [N]
-    Mdec = ps_force*em
-    concrete_force = ps_force*cos(24.0*pi/180.0)
-    fpe = ps_force/Aps # Effective post tensioning stress [MPa] ***will input the one on the test day***
-    println("fpe/fpu = ", fpe/1860)
+    ps_force = 890.0 / sind(24.0)
+    # Post tensioning force [N]
+    Mdec = ps_force * em
+    concrete_force = ps_force * cos(24.0 * pi / 180.0)
+    fpe = ps_force / Aps # Effective post tensioning stress [MPa] ***will input the one on the test day***
+    println("fpe/fpu = ", fpe / 1860)
     ϵpe = fpe / Eps # Effective post tensioning strain [mm/mm]
     #find moment due to the applied force.
-    ϵce = ps_force*em/Zb/Ec - concrete_force/Atr/Ec # effetive strain in the concrete [mm/mm]
+    ϵce = ps_force * em / Zb / Ec - concrete_force / Atr / Ec # effetive strain in the concrete [mm/mm]
 
     #Paramter for shear calculation
-    fR3 = 3.5 
-    fR1 = 4.0 
+    fR3 = 3.5
+    fR1 = 4.0
 
 end
 
@@ -106,4 +106,4 @@ end
 # Create structs
 Mat = Material(fc′, Ec, Eps, fpy)
 Sec = Section(em, es, em0, dps0, Ls, Ld, L, Aps, Atr, Itr, Zb, 0.4)
-f   = Loads(w, mg, fr, r, fpe, ϵpe, ϵce, Mdec)
+f = Loads(w, mg, fr, r, fpe, ϵpe, ϵce, Mdec)

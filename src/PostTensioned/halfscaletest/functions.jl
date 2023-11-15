@@ -222,10 +222,10 @@ function main()
         fps_history[i] = fps
         dps_history[i] = dps
         Icr_history[i] = Icr
-        Ie_history[i]  = Ie
-        c_history[i]   = c
+        Ie_history[i] = Ie
+        c_history[i] = c
         dis_history[i] = δ_mid
-        fc_history[i]  = fc
+        fc_history[i] = fc
         dis_dev_history[i] = δ_dev
     end
 
@@ -245,7 +245,7 @@ function loop1()
 
         #assume value of Itr and fps
         # loop2()
-        
+
         # println("Icr = ", Icr)
         # println("Ac_req ", Ac_req)
         # println("c: ", c)
@@ -266,7 +266,7 @@ function loop1()
     end
 end
 
-    
+
 
 function loop2()
 
@@ -274,7 +274,7 @@ function loop2()
     counter2 = 0 #loop2 counter
     while conv2 > 1e-6
         println("Im here in loop2")
-        println(dps,fps,fpe,Ie,Itr)
+        println(dps, fps, fpe, Ie, Itr)
         println(Ωc)
         println(Icr)
         # println("counter")

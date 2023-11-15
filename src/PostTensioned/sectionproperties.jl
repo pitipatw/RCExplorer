@@ -55,7 +55,7 @@ function getprop(target_a::Float64, L::Float64, t::Float64, Lc::Float64;
         dx = 0.5
         dy = 0.5
 
-        
+
         if type == "Beam"
             nodes = fullpixel(L, t, Lc)
             pts = fillpoints(nodes, dx, dy)

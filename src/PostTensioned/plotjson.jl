@@ -6,40 +6,40 @@ using PlotlyJS
 # end
 
 
-function plotforces(data::Vector{Any}; cat = "mu", e = 1)
-#collect total number of elements
-ne = []
-for i in eachindex(data)
-    nei = Int(data[i]["e_idx"])
-    # println(nei)
-    if !(nei in ne)
-        push!(ne, nei)
-    end
-end
-
-#now, plot by section
-
-#element number 
-
-# e = 1
-x = []
-y = []
-xpos = 0
-for i in eachindex(data)
-    if Int(data[i]["e_idx"]) == e
-        push!(x, xpos)
-        push!(y, data[i][cat])
-        xpos += 0.5
+function plotforces(data::Vector{Any}; cat="mu", e=1)
+    #collect total number of elements
+    ne = []
+    for i in eachindex(data)
+        nei = Int(data[i]["e_idx"])
+        # println(nei)
+        if !(nei in ne)
+            push!(ne, nei)
+        end
     end
 
-    
-end
+    #now, plot by section
 
-x1 = x
-y1 = y
-trace1 = PlotlyJS.scatter(; x = x1 , y = y1 , mode = "lines+markers", name = "element $e $cat")
-layout = Layout(;title="element $e ($cat)")
-PlotlyJS.plot(trace1, layout)
+    #element number 
+
+    # e = 1
+    x = []
+    y = []
+    xpos = 0
+    for i in eachindex(data)
+        if Int(data[i]["e_idx"]) == e
+            push!(x, xpos)
+            push!(y, data[i][cat])
+            xpos += 0.5
+        end
+
+
+    end
+
+    x1 = x
+    y1 = y
+    trace1 = PlotlyJS.scatter(; x=x1, y=y1, mode="lines+markers", name="element $e $cat")
+    layout = Layout(; title="element $e ($cat)")
+    PlotlyJS.plot(trace1, layout)
 end
 
 # plotforces(data)

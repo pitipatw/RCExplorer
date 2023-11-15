@@ -28,11 +28,11 @@ Map n dimentional vector into an index.
 """
 function mapping(n::Vector{Int64}, idx::Vector{Int64})
     d = Vector{Int64}(undef, length(n))
-    for i in eachindex(n) 
+    for i in eachindex(n)
         if i == length(d)
-            d[i] = mod(idx[i]+n[i]-1, n[i])+1
+            d[i] = mod(idx[i] + n[i] - 1, n[i]) + 1
         else
-            d[i] = (idx[i]-1)*prod(n[i+1:end])
+            d[i] = (idx[i] - 1) * prod(n[i+1:end])
         end
     end
     return sum(d)
@@ -45,7 +45,7 @@ output: ecc of fc′ [kgCO2e/m3]
 """
 function fc2e(fc′::Real)
     out = -0.0626944435544512 * fc′^2 + 10.0086510099949 * fc′ + 84.14807
-   return  out
+    return out
 end
 
 """
@@ -56,19 +56,19 @@ Pu [kN]
 Mu [kNm]
 Shear [kN]
 """
-function get_capacities(fc′, as, ec, fpe,L,t,Lc;
-    echo = false,
+function get_capacities(fc′, as, ec, fpe, L, t, Lc;
+    echo=false,
     # L = 102.5,
     # t = 17.5,
     # Lc = 15.,
     # L = 202.5,
     # t = 17.5,
     # Lc = 15.,
-    T = "Beam",
-    Ep = 200_000,
-    shear_ratio = 0.30,
-    fR1 = 2.0,
-    fR3 = 2.0 * 0.850)
+    T="Beam",
+    Ep=200_000,
+    shear_ratio=0.30,
+    fR1=2.0,
+    fR3=2.0 * 0.850)
 
     #Calculation starts here.
 
@@ -113,16 +113,16 @@ function get_capacities(fc′, as, ec, fpe,L,t,Lc;
 
     #concrete compression area balanced with steel tension force.
     acomp = as * fps / (0.85 * fc′)
-    if acomp > ac 
+    if acomp > ac
         println("Acomp exceeds Ac, using Ac instead")
         acomp = ac
     end
     #rebar position measure from 0.0 down
-    rebarpos = ec*(-L)
-    @show d = depth_from_area(section,acomp)
+    rebarpos = ec * (-L)
+    @show d = depth_from_area(section, acomp)
 
     # depth, cgcomp= getprop(acomp, L, t, Lc)
-    
+
     # clipped_section = sutherland_hodge(section::PolygonalSection, y::Float64; return_section = true)
     # mn_steel = as * fps * arm / 1e6 #[kNm]
 
@@ -144,19 +144,19 @@ function get_capacities(fc′, as, ec, fpe,L,t,Lc;
         tol = 0.001
 
         while tol > 0.001
-            ϵs_new = ϵc_new*(rebarpos - depth) / depth
+            ϵs_new = ϵc_new * (rebarpos - depth) / depth
             fps_new = ϵs_new * Ep
 
             acomp = as * fps_new / (0.85 * fc′)
-            
+
             # depth_new, cgcomp= getprop(acomp, L, t, Lc)
-            tol = abs(depth_new - depth)/depth
+            tol = abs(depth_new - depth) / depth
             depth = depth_new
         end
     end
     cgcomp = 100 #dummy
     arm = cgcomp - rebarpos
-        #moment arm of the section is the distance between the centroid of the compression area and the steel.
+    #moment arm of the section is the distance between the centroid of the compression area and the steel.
 
     mn = 0.85 * fc′ * ac * arm / 1e6 #[kNm]
     mu = Φ(ϵs) * mn #[kNm]
@@ -166,7 +166,7 @@ function get_capacities(fc′, as, ec, fpe,L,t,Lc;
     #Shear Calculation
     d = L
     ashear = ac * shear_ratio
-    fctk = 0.17*sqrt(fc′)
+    fctk = 0.17 * sqrt(fc′)
     ρs = as / ashear
     k = clamp(sqrt(200.0 / d), 0, 2.0)
     fFts = 0.45 * fR1
@@ -185,9 +185,9 @@ function get_capacities(fc′, as, ec, fpe,L,t,Lc;
     cfc = fc2e(fc′) #kgCO2e/m3
     # 0.854 #kgper kg
     # 7850 kg/m3
-    cst = 0.854*7850 #kgCO2e/m3
+    cst = 0.854 * 7850 #kgCO2e/m3
 
-    embodied = ( ac*cfc + as*cst )/ 1e6 
+    embodied = (ac * cfc + as * cst) / 1e6
     if echo
         @printf "The pure compression capacity is %.3f [kN]\n" pu
         @printf "The pure moment capacity is %.3f [kNm]\n" mu
@@ -195,14 +195,14 @@ function get_capacities(fc′, as, ec, fpe,L,t,Lc;
         @printf "The embodied carbon is %.3f [kgCo2e/m3]" embodied
     end
 
-#write output into CSV
-# dataall = hcat(val,res,checkres)
-# table1 = DataFrame(dataall, :auto)
-# CSV.write("output.csv", table1)
+    #write output into CSV
+    # dataall = hcat(val,res,checkres)
+    # table1 = DataFrame(dataall, :auto)
+    # CSV.write("output.csv", table1)
 
-#parallel plot the result 
+    #parallel plot the result 
 
-#Scatter plot the result.
+    #Scatter plot the result.
     return pu, mu, vu, embodied
 end
 
@@ -211,18 +211,18 @@ function get_catalog()
     L = 102.5
     t = 17.5
     Lc = 15.0
-    return get_catalog(L,t,Lc)
+    return get_catalog(L, t, Lc)
 end
 
-function get_catalog(L,t,Lc; run_test=true)
+function get_catalog(L, t, Lc; run_test=true)
     if !run_test
-        range_fc′ = 28.:7.:56.
+        range_fc′ = 28.0:7.0:56.0
         range_as = [99.0, 140.0]
         range_ec = 0.5:0.1:1.2
         range_fpe = (0.00:0.02:0.5) * 1860.0
     else
         #test
-        range_fc′ = 28.
+        range_fc′ = 28.0
         range_as = 99.0
         range_ec = 0.5
         range_fpe = 186.0
@@ -251,25 +251,25 @@ function get_catalog(L,t,Lc; run_test=true)
                     pu, mu, vu, embodied = get_capacities(fc′, as, ec, fpe, L, t, Lc)
                     idx_all = [idx_fc′, idx_as, idx_ec, idx_fpe]
 
-                    idx = mapping(n,idx_all)
-                    results[idx,:] = [fc′, as, ec, fpe, pu, mu, vu, embodied]
+                    idx = mapping(n, idx_all)
+                    results[idx, :] = [fc′, as, ec, fpe, pu, mu, vu, embodied]
                 end
             end
         end
     end
-    df = DataFrame(results , [ :fc′, :as,:ec,:fpe,:Pu,:Mu, :Vu, :carbon])
-    df[!,:ID] = 1:total_s
+    df = DataFrame(results, [:fc′, :as, :ec, :fpe, :Pu, :Mu, :Vu, :carbon])
+    df[!, :ID] = 1:total_s
     return df# results # DataFrame(results)
 end
 
 #test
 results_test = get_catalog()
-results = get_catalog(100,10,10,run_test=false)
+results = get_catalog(100, 10, 10, run_test=false)
 # 11.147s , 575.72 MiB allocation
 date = Dates.today()
 time = Dates.now()
 
-CSV.write(joinpath(@__DIR__,"Outputs\\output_$date.csv"), results)
+CSV.write(joinpath(@__DIR__, "Outputs\\output_$date.csv"), results)
 
 
 # calcap(28., 99.0, 0.5, 1600.0)

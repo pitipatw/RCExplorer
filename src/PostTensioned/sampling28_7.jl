@@ -64,7 +64,7 @@ res = zeros(nsam_pts, 3)
 checkres = zeros(nsam_pts, 1)
 
 #loop sampling space.
-global counter = 0 
+global counter = 0
 @time for L in s_L
     for t in s_t
         for Lc in s_Lc
@@ -81,9 +81,9 @@ global counter = 0
                                     #It should be x1 - x9 .
                                     val[counter, 1] = x1
                                     val[counter, 2] = x2
-                                    val[counter ,3] = L
-                                    val[counter ,4] = t
-                                    val[counter ,5] = Lc
+                                    val[counter, 3] = L
+                                    val[counter, 4] = t
+                                    val[counter, 5] = Lc
                                     val[counter, 6] = x6
                                     val[counter, 7] = x7
                                     val[counter, 8] = s_baydepth[1]
@@ -91,8 +91,8 @@ global counter = 0
                                     val[counter, 10] = x10
                                     val[counter, 11] = x11
 
-                                    @show out = sampleme(x1, x2, nodes,L, x6, x7, s_l[1], s_baydepth[1], x10, x11)
-                                    res[counter,:] .= out[1:3]
+                                    @show out = sampleme(x1, x2, nodes, L, x6, x7, s_l[1], s_baydepth[1], x10, x11)
+                                    res[counter, :] .= out[1:3]
                                     # println(out[4])
                                     checkres[counter] = out[4]
                                 end
@@ -106,7 +106,7 @@ global counter = 0
 end
 
 #write output into CSV
-dataall = hcat(val,res,checkres)
+dataall = hcat(val, res, checkres)
 table1 = DataFrame(dataall, :auto)
 CSV.write("output.csv", table1)
 

@@ -49,7 +49,7 @@ include("ptFunc.jl")
 
 
 
-function sampleme(fc′::Float64, aps::Float64, nodes::Matrix{Float64},L::Float64, fpe::Float64, e::Float64,
+function sampleme(fc′::Float64, aps::Float64, nodes::Matrix{Float64}, L::Float64, fpe::Float64, e::Float64,
     l::Float64, baydepth::Float64, fR1::Float64, fR3::Float64)
     #could also be fpe
 

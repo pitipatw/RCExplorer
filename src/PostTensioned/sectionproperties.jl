@@ -1,7 +1,7 @@
 using CSV, DataFrames
 using Interpolations
 
-include("pixelgeo.jl")
+include("Geometry/pixelgeo.jl")
 
 """
 Get the depth and centroid of the section given eval points and target area
@@ -24,6 +24,7 @@ function getprop(target_a::Float64, L::Float64, t::Float64, Lc::Float64;
     test=false, type="Beam")
 
     @assert target_a >= 0
+    
     # check file in "sections" folder for a file name
     # "pixel_$L_$t_$Lc.csv"
     if test

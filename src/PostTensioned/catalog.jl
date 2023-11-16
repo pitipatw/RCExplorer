@@ -2,7 +2,7 @@ using Dates
 using BenchmarkTools
 using AsapSections
 using Printf
-include("pixelgeo.jl")
+include("Geometry/pixelgeo.jl")
 include("sectionproperties.jl")
 include("ptFunc.jl")
 
@@ -58,12 +58,8 @@ Shear [kN]
 """
 function get_capacities(fc′, as, ec, fpe, L, t, Lc;
     echo=false,
-    # L = 102.5,
-    # t = 17.5,
-    # Lc = 15.,
-    # L = 202.5,
-    # t = 17.5,
-    # Lc = 15.,
+    # L = 102.5, t = 17.5, Lc = 15.,
+    # L = 202.5, t = 17.5, Lc = 15.,
     T="Beam",
     Ep=200_000,
     shear_ratio=0.30,
@@ -80,7 +76,8 @@ function get_capacities(fc′, as, ec, fpe, L, t, Lc;
 
     elseif T == "Column"
         section = make_X2_layup_section(L, t, Lc)
-        #also have to do x4, but will see.
+
+        #also have to do x4, but will see how can we do this, run 2 times and embeded?
         # section = make_X4_layup_section(L, t, Lc)
         # compoundsection = CompoundSection(section)
         ac = section.area

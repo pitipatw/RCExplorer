@@ -1,17 +1,26 @@
-#Numerical Integration.
-# Could implement gaussian quadrature here, but that's for later.
-
 using PolygonInbounds
-# nodes = [ptx pty] of the outline of the section
+"""
+Numerical Integration.
+Could implement gaussian quadrature here, but that's for later.
+"""
+# nodes := [ptx pty], points describing outline of the section
 nodes = [-75.0 -100.0; 75.0 -100.0; 75.0 100.0; -75.0 100.0]
-# nodes = newnodes
+"""
+4.....3
+.     .
+.     .
+1.....2
+"""
+
+#increment
 dx = 0.1
 dy = 0.1
 x = -205.0:dx:205.0
 y = -200.0:dy:150.0
 #create a matrix of grid points.
+
 points = Matrix{Float64}(undef, size(x)[1] * size(y)[1], 2)
-for i = 1:size(x)[1]
+@time for i = 1:size(x)[1]
     for j = 1:size(y)[1]
         points[(i-1)*size(y)[1]+j, :] = [x[i], y[j]]
     end
@@ -19,18 +28,24 @@ end
 
 #this is a lot faster!!
 using GeometryTypes
-grid(ranges::NTuple{N,<:AbstractRange}) where {N} = Point.(Iterators.product(ranges...))
-p = grid((x, y))
+# grid(ranges::NTuple{N,<:AbstractRange}) where {N} = GeometryTypes.Point.(Iterators.product(ranges...))
+grid(ranges::NTuple{N,<:AbstractRange}) where {N} = collect(Iterators.product(ranges...))
+@time p = vec(grid((x, y)))
+
+
 #connecting the points
 edges = Matrix{Int64}(undef, size(nodes)[1], 2)
 for i = 1:(size(nodes)[1]-1)
     edges[i, :] = [i, i + 1]
 end
+
+#connect the last node to the first node.
 edges[size(nodes)[1], :] = [size(nodes)[1], 1]
 edges #must be int!
-tol = 1e-1
 
-stat = inpoly2(points, nodes, edges, atol=tol)
+
+tol = 1e-1
+@time stat = inpoly2(points, nodes, edges, atol=tol)
 
 # f2 = Figure(resolution = (800, 600))
 # ax2 = Axis(f2[1, 1], xlabel = "x", ylabel = "y", aspect = DataAspect())#, aspect = DataAspect(), xgrid = false, ygrid = false)
@@ -44,6 +59,7 @@ stat = inpoly2(points, nodes, edges, atol=tol)
 # end
 # f2
 
+#filter points that are in the polygon.
 p_inpoly = points[stat[:, 1], :]
 area = dx * dy * size(p_inpoly)[1]
 

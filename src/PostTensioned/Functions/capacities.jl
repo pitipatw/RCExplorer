@@ -1,52 +1,5 @@
-using Dates
-using BenchmarkTools
-using AsapSections
-using Printf
-include("pixelgeo.jl")
-include("sectionproperties.jl")
-include("ptFunc.jl")
-
-
-
-# range_fc′ = 28.:7.:56.
-# range_as = [99.0, 140.0]
-# ec_max = 0.7
-# range_ec = 0.5:0.1:ec_max
-# range_fpe = (0.1:0.1:0.7) * 1860.0
-
-
-#old version
-# function map(idx_fc′, idx_as, idx_ec, idx_fpe;
-#     range_fc′=range_fc′, range_as=range_as, range_ec=range_ec, range_fpe=range_fpe)
-#     return idx_fpe +
-#            length(range_fpe) * (idx_ec - 1) +
-#            length(range_fpe) * length(range_ec) * (idx_as - 1) +
-#            length(range_fpe) * length(range_ec) * length(range_as) * (idx_fc′ - 1)
-# end
-"""
-Map an n dimentional vector into an index.
-"""
-function mapping(n::Vector{Int64}, idx::Vector{Int64})
-    d = Vector{Int64}(undef, length(n))
-    for i in eachindex(n) 
-        if i == length(d)
-            d[i] = mod(idx[i]+n[i]-1, n[i])+1
-        else
-            d[i] = (idx[i]-1)*prod(n[i+1:end])
-        end
-    end
-    return sum(d)
-end
-
-"""
-Get embodied carbon coefficient of concrete based on fc′
-input : fc′ [MPa]
-output: ecc of fc′ [kgCO2e/m3]
-"""
-function fc2e(fc′::Real)
-    out = -0.0626944435544512 * fc′^2 + 10.0086510099949 * fc′ + 84.14807
-   return  out
-end
+include("../Geometry/pixelgeo.jl")
+include("../Functions/embodiedCarbon.jl")
 
 """
 Calculate capacities of the given section
@@ -56,14 +9,13 @@ Pu [kN]
 Mu [kNm]
 Shear [kN]
 """
-function get_capacities(fc′, as, ec, fpe,L,t,Lc;
+function get_capacities(fc′::Float64, as::Float64, ec::Float64, fpe::Float64,
+    L::Float64,
+    t::Float64,
+    Lc::Float64;
     echo = false,
-    # L = 102.5,
-    # t = 17.5,
-    # Lc = 15.,
-    # L = 202.5,
-    # t = 17.5,
-    # Lc = 15.,
+    # L = 102.5, t = 17.5, Lc = 15.,
+    # L = 202.5, t = 17.5, Lc = 15.,
     T = "Beam",
     Ep = 200_000,
     shear_ratio = 0.30,
@@ -71,34 +23,34 @@ function get_capacities(fc′, as, ec, fpe,L,t,Lc;
     fR3 = 2.0 * 0.850)
 
     #Calculation starts here.
-
+    
+    #Load the right sections (Using AsapSections here)
     if T == "Beam"
-        sections = make_Y_layup_section(L, t, Lc)
-
-        # y, A = depth_map(compoundsection, 250)
-
+        compoundsection = make_Y_layup_section(L, t, Lc)
     elseif T == "Column"
-        sections = make_X2_layup_section(L, t, Lc)
+        compoundsection = make_X2_layup_section(L, t, Lc)
         #also have to do x4, but will see.
         # section = make_X4_layup_section(L, t, Lc)
-        # compoundsection = CompoundSection(section)
-        # ac = sections.area
-        # y, A = depth_map(compoundsection, 250)
     else
         println("Invalid type")
     end
 
-    compoundsection = CompoundSection(sections)
+    # compoundsection = CompoundSection(sections)
+
+    #concrete area
     ac = compoundsection.area
-    #load section properties file
+
+    # [Alternative] 
+    # load section properties file
     # filename = "pixel_$L_$t_$Lc.csv"
     # section = CSV.read(filename, header=true)
 
-
-    #Pure Compression Capacity
+    #Pure Compression Capacity Calculation
+    
     ccn = 0.85 * fc′ * ac
-    #need a justification on 0.003 Ep
-    pn = (ccn - (fpe - 0.003 * Ep) * as) / 1000 # convert to [kN]
+    #*need a justification on 0.003 Ep
+    # pn = (ccn - (fpe - 0.003 * Ep) * as) / 1000 # convert to [kN]
+    pn = (ccn - fpe* as) / 1000 # convert to [kN]
     pu = 0.65 * 0.8 * pn #[kN]
     ptforce = pu #[kN]
 
@@ -118,15 +70,16 @@ function get_capacities(fc′, as, ec, fpe,L,t,Lc;
         acomp = ac
     end
 
-    #rebar position measure from 0.0 down, absolute values
+    #rebar position measure from 0.0 (centroid) down, relative value
     rebarpos = ec*(-L)
-    #depth is from the top.
+    #depth is from the top most of the section
     c_depth = depth_from_area(compoundsection,acomp,show_stats = false )
     ymax = compoundsection.ymax #global coordinate
+
     c_depth_global = ymax - c_depth #global coordinate
 
     new_sections = Vector{SolidSection}()
-    for sub_s in sections
+    for sub_s in compoundsection.solids
         sub_s_ymax = sub_s.ymax #global coordinate
         c_depth_local = sub_s_ymax - c_depth_global 
         if c_depth_local > 0
@@ -230,76 +183,3 @@ function get_capacities(fc′, as, ec, fpe,L,t,Lc;
 #Scatter plot the result.
     return pu, mu, vu, embodied
 end
-
-
-function get_catalog(test::Bool)
-    L  = 200.0
-    t  = 17.5
-    Lc = 15.0
-    return get_catalog(L,t,Lc, run_test = test)
-end
-
-function get_catalog(L,t,Lc; run_test=true)
-    if !run_test
-        range_fc′ = 28.:2.:56.
-        range_as = 50.0:10.0:140#[99.0, 140.0]
-        range_ec = 0.05:0.05:1.2
-        range_fpe = (0.00:0.02:0.5) * 1860.0
-    else
-        #test
-        range_fc′ = 28.
-        range_as = 99.0
-        range_ec = 0.5
-        range_fpe = 186.0
-    end
-
-    nfc′ = length(range_fc′)
-    nas = length(range_as)
-    nec = length(range_ec)
-    nfpe = length(range_fpe)
-
-
-    total_s = nfc′ * nas * nec * nfpe
-    results = Matrix{Float64}(undef, total_s, 8)
-    #we will loop through these three parameters and get the results.
-    # with constant cross section properties.
-    n = [nfc′, nas, nec, nfpe]
-    for idx_fc′ in eachindex(range_fc′)
-        for idx_as in eachindex(range_as)
-            for idx_ec in eachindex(range_ec)
-                for idx_fpe in eachindex(range_fpe)
-                    fc′ = range_fc′[idx_fc′]
-                    as = range_as[idx_as]
-                    ec = range_ec[idx_ec]
-                    fpe = range_fpe[idx_fpe]
-
-                    pu, mu, vu, embodied = get_capacities(fc′, as, ec, fpe, L, t, Lc)
-                    idx_all = [idx_fc′, idx_as, idx_ec, idx_fpe]
-
-                    idx = mapping(n,idx_all)
-                    results[idx,:] = [fc′, as, ec, fpe, pu, mu, vu, embodied]
-                end
-            end
-        end
-    end
-    df = DataFrame(results , [ :fc′, :as,:ec,:fpe,:Pu,:Mu, :Vu, :carbon])
-    df[!,:ID] = 1:total_s
-    println("Got Catalog with $total_s outputs")
-    return df# results # DataFrame(results)
-end
-
-#test
-# results_test = get_catalog()
-# results = get_catalog(100,10,10,run_test=false)
-# # 11.147s , 575.72 MiB allocation
-# date = Dates.today()
-# time = Dates.now()
-
-# CSV.write(joinpath(@__DIR__,"Outputs\\output_$date.csv"), results)
-
-results = get_catalog(false)
-
-CSV.write(joinpath(@__DIR__,"Outputs\\output_static.csv"), results)
-
-
-# calcap(28., 99.0, 0.5, 1600.0)

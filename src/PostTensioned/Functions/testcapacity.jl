@@ -15,7 +15,7 @@ include("postTensionedFunc.jl")
     Ep = 200_000
 
     compoundsection = make_Y_layup_section(L, t, Lc)
-    compoundsection = c1
+    # compoundsection = c1
     f1 = Figure(resolution = (500,500))
     ax1 = Axis(f1[1,1], aspect = DataAspect(), title = "test plot")
     for s in compoundsection.solids
@@ -100,7 +100,7 @@ include("postTensionedFunc.jl")
             end
             c_new = depth_from_area(compoundsection, acomp, show_stats=true)
             @show tol = abs(c_new - c) / c
-            @show c = c_new
+            @show c = (c_new+c)/2
             # @show c = 0.003*d/(ϵs_new+0.003)
             # @show  ϵc_new = c * ϵs / (d - c)
 
@@ -116,10 +116,10 @@ include("postTensionedFunc.jl")
     c_depth_global = ymax - c #global coordinate
     # hlines!(ax1, c_depth_global)
 
-    ax2 = Axis(f1[2,1], aspect = DataAspect())
-    ax3 = Axis(f1[2,2], aspect = DataAspect())
-    ax4 = Axis(f1[2,3],aspect = DataAspect())
-    axs = [ax2, ax3, ax4]
+    ax2 = Axis(f1[2,1], aspect = DataAspect(), limits = ax1.limits)
+    # ax3 = Axis(f1[2,2], aspect = DataAspect(), limits = ax1.limits)
+    # ax4 = Axis(f1[2,3],aspect = DataAspect(), limits = ax1.limits)
+    # axs = [ax2, a]
 
     new_sections = Vector{SolidSection}()
     for k in 1:length(compoundsection.solids)
@@ -138,7 +138,7 @@ include("postTensionedFunc.jl")
             # if k == 2 
                 # println(new_sub_sec.points)
             # println(new_sub_sec.area)
-            lines!(axs[k], new_sub_sec.points)
+            lines!(ax2, new_sub_sec.points)
             push!(new_sections, sutherland_hodgman(sub_s, c_depth_local, return_section=true))
         end
     end

@@ -1,61 +1,42 @@
 include("../Geometry/pixelgeo.jl")
 include("../Functions/embodiedCarbon.jl")
+include("../Functions/capacities.jl")
+
+""""
+get axial capacity of a section
+output: P[kN]
+"""
+function get_Pu(compoundsection::CompoundSection, fc′::Float64, as::Float64, fpe::Float64)
+
+     #concrete area
+     ac = compoundsection.area
+
+     # [Alternative] 
+     # load section properties file
+     # filename = "pixel_$L_$t_$Lc.csv"
+     # section = CSV.read(filename, header=true)
+ 
+     #Pure Compression Capacity Calculation
+     
+     
+     ccn = 0.85 * fc′ * ac
+     #*need a justification on 0.003 Ep
+     # pn = (ccn - (fpe - 0.003 * Ep) * as) / 1000 # convert to [kN]
+     pn = (ccn - fpe* as) / 1000 # convert to [kN]
+     pu = 0.65 * 0.8 * pn #[kN]
+     
+     return pu
+end
 
 """
-Calculate capacities of the given section
-Inputs : section information
-Outputs:
-Pu [kN]
+get moment capacity of a section
 Mu [kNm]
-Shear [kN]
 """
-function get_capacities(fc′::Float64, as::Float64, ec::Float64, fpe::Float64,
-    L::Float64,
-    t::Float64,
-    Lc::Float64;
-    echo = false,
-    # L = 102.5, t = 17.5, Lc = 15.,
-    # L = 202.5, t = 17.5, Lc = 15.,
-    T = "Beam",
-    Ep = 200_000,
-    shear_ratio = 0.30,
-    fR1 = 2.0,
-    fR3 = 2.0 * 0.850)
-
-    #Calculation starts here.
-    
-    #Load the right sections (Using AsapSections here)
-    if T == "Beam"
-        compoundsection = make_Y_layup_section(L, t, Lc)
-    elseif T == "Column"
-        compoundsection = make_X2_layup_section(L, t, Lc)
-        #also have to do x4, but will see.
-        # section = make_X4_layup_section(L, t, Lc)
-    else
-        println("Invalid type")
-    end
-
-    # compoundsection = CompoundSection(sections)
-
-    #concrete area
-    ac = compoundsection.area
-
-    # [Alternative] 
-    # load section properties file
-    # filename = "pixel_$L_$t_$Lc.csv"
-    # section = CSV.read(filename, header=true)
-
-    #Pure Compression Capacity Calculation
-    
-    ccn = 0.85 * fc′ * ac
-    #*need a justification on 0.003 Ep
-    # pn = (ccn - (fpe - 0.003 * Ep) * as) / 1000 # convert to [kN]
-    pn = (ccn - fpe* as) / 1000 # convert to [kN]
-    pu = 0.65 * 0.8 * pn #[kN]
-    ptforce = pu #[kN]
+function get_Mu(compoundsection::CompoundSection, fc′::Float64, as::Float64, fpe::Float64, ec::Float64, L::Float64)
 
     #Pure Moment Capacity
-
+    #concrete area
+    ac = compoundsection.area
     #From ACI318M-19 Table: 20.3.2.4.1
     ρ = as / ac #reinforcement ratio (Asteel/Aconcrete)
     fps1 = fpe + 70 + fc′ / (100 * ρ) #
@@ -139,9 +120,20 @@ function get_capacities(fc′::Float64, as::Float64, ec::Float64, fpe::Float64,
     mn = 0.85 * fc′ * ac * arm / 1e6 #[kNm]
     mu = Φ(ϵs) * mn #[kNm]
 
-    # println("#"^50)
+    return mu
+end
 
-    #Shear Calculation
+"""
+find shear capacity based on fiber reinforced
+from fib model code.
+"""
+function get_Vu(compoundsection::CompoundSection, fc′::Float64, as::Float64, fpe::Float64, ec::Float64, L::Float64;
+    shear_ratio = 0.30,
+    fR1 = 2.0,
+    fR3 = 2.0 * 0.850)
+
+    #Shear calculation.
+    ac = compoundsection.area
     d = L
     ashear = ac * shear_ratio
     fctk = 0.17*sqrt(fc′)
@@ -150,6 +142,7 @@ function get_capacities(fc′::Float64, as::Float64, ec::Float64, fpe::Float64,
     fFts = 0.45 * fR1
     wu = 1.5
     CMOD3 = 1.5
+    ptforce = get_Pu(compoundsection, fc′, as, fpe)
     ned = ptforce# can be different
     σcp1 = ned / ac
     σcp2 = 0.2 * fc′
@@ -157,11 +150,53 @@ function get_capacities(fc′::Float64, as::Float64, ec::Float64, fpe::Float64,
     fFtu = get_fFtu(fFts, wu, CMOD3, fR1, fR3)
     vn = ashear * get_v(ρs, fc′, fctk, fFtu, 1.0, σcp1, k)# already in kN
     vu = 0.75 * vn
+ return vu
 
+end
+
+
+"""
+Calculate capacities of the given section
+Inputs : section information
+Outputs:
+Pu [kN]
+Mu [kNm]
+Shear [kN]
+"""
+function get_capacities(fc′::Float64, as::Float64, ec::Float64, fpe::Float64,
+    L::Float64,
+    t::Float64,
+    Lc::Float64;
+    echo = false,
+    # L = 102.5, t = 17.5, Lc = 15.,
+    # L = 202.5, t = 17.5, Lc = 15.,
+    T = "Beam",
+    Ep = 200_000,
+
+
+    #Calculation starts here.
+    
+    #Load the right sections (Using AsapSections here)
+    if T == "Beam"
+        compoundsection = make_Y_layup_section(L, t, Lc)
+    elseif T == "Column"
+        compoundsection = make_X2_layup_section(L, t, Lc)
+        #also have to do x4, but will see.
+        # section = make_X4_layup_section(L, t, Lc)
+    else
+        println("Invalid type")
+    end
+
+    # compoundsection = CompoundSection(sections)
+
+    pu = get_Pu(compoundsection, fc′, as, fpe)
+    mu = get_Mu(compoundsection, fc′, as, fpe, ec, L)
+    vu = get_Vu(compoundsection, fc′, as, fpe, ec, L)
 
     #Embodied Carbon Calculation
     cfc = fc2e(fc′) #kgCO2e/m3
-    # 0.854 #kgper kg
+
+    # 0.854 kgCo2e per kgsteel
     # 7850 kg/m3
     cst = 0.854*7850 #kgCO2e/m3
 

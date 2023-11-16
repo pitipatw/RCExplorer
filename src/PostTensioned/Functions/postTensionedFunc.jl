@@ -28,7 +28,9 @@ function get_fFtu(fFts::Float64, wu::Float64, CMOD3::Float64, fR1::Float64, fR3:
     out = fFts - wu / CMOD3 * (fFts - 0.5 * fR3 + 0.2 * fR1)
     return out
 end
+
 """
+from fib model code
 fFtuk = fFtu
 fck = fc′
 """

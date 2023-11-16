@@ -163,10 +163,10 @@ function make_X4_layup_section(L::Real, t::Real, Lc::Real; n=10, offset=0.0)
 end
 
 
-viz = true
+viz = false
 if viz == true
     include("../Visualization/plotpixel.jl")
-    viz_all_pixels()
+    # viz_all_pixels()
 end
 
 

@@ -65,11 +65,11 @@ scatter!(ax2, bays, Mdemands_residential, markersize=10)
 
 ax3 = Axis(f1[2, 1], title="Beam spans vs Moment damands [Office]",
     xlabel="Spans [m]", ylabel="Moment demands [kN.m]")
-scatter!(ax3, spans, Mdemands_office, markersize=10, color=bays)
+scatter!(ax3, spans, Mdemands_office, markersize=10, color=:green)
 
 ax4 = Axis(f1[2, 2], title="Bays vs Moment damands [Office] ",
     xlabel="Bays [m]", ylabel="Moment demands [kN.m]")
-scatter!(ax4, bays, Mdemands_office, markersize=10, color=spans)
+scatter!(ax4, bays, Mdemands_office, markersize=10, color=:green)
 f1
 
 # save("span_bay_load.png", f1)

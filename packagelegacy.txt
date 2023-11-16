@@ -14,7 +14,7 @@
 [43a3c2be] PairPlots v1.1.1
 [f0f68f2c] PlotlyJS v0.18.11
 [f2b01f46] Roots v2.0.20
-⌅ [2913bbd2] StatsBase v0.33.21
+[2913bbd2] StatsBase v0.33.21
 [0c5d862f] Symbolics v5.10.0
 [3a884ed6] UnPack v1.0.2
 [713ab87d] kjlMakie v0.1.0 `https://github.com/keithjlee/kjlMakie#master`

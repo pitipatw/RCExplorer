@@ -1,5 +1,6 @@
 using Makie, GLMakie, CairoMakie
-# using AsapSections
+include("../Geometry/pixelgeo.jl")
+
 
 function plotpixel(L::Float64, t::Float64, Lc::Float64)
 
@@ -42,9 +43,9 @@ function plotpixel(L::Float64, t::Float64, Lc::Float64)
 end
 
 L = 300.0
-t = 30.0
-Lc = 30.0
-plotpixel(200., 30.,10.)
+t = 50.0
+Lc = 15.0
+plotpixel(L,t,Lc)
 
 # # function mappixel
 # y, A = depth_map(compoundsection1, 250)

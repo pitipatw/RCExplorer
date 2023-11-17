@@ -45,7 +45,7 @@ function mapping(n::Vector{Int64}, idx::Vector{Int64})
 end 
 
 function get_catalog(test::Bool)
-    L  = 200.0
+    L  = 100.0
     t  = 17.5
     Lc = 15.0
     return get_catalog(L,t,Lc, run_test = test)
@@ -53,10 +53,10 @@ end
 
 function get_catalog(L,t,Lc; run_test=true)
     if !run_test
-        range_fc′ = 28.:2.:56.
-        range_as = 50.0:10.0:140#[99.0, 140.0]
-        range_ec = 0.05:0.05:1.2
-        range_fpe = (0.00:0.02:0.5) * 1860.0
+        range_fc′ = 28.:4.:56.
+        range_as = 40.0:20.0:140#[99.0, 140.0]
+        range_ec = 0.05:0.025:1.2
+        range_fpe = (0.00:0.025:0.7) * 1860.0
     else
         #test
         range_fc′ = 28.

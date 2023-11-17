@@ -1,0 +1,33 @@
+#final design vizualization 
+using Makie, GLMakie
+
+
+L = 200
+f1 = Figure(resolution = (1800,5000))
+Axes = Vector{Axis}(undef, length(ne))
+n = 6
+m = 3  #we have 18 elements
+# global start = 1
+for i in eachindex(ne)
+    e = ne[i]
+    #find how many elements in that section.
+    sections = elements_to_sections[e]
+    @show ns = length(sections)
+    ix = div(i-1,n)+1
+    iy = mod(i-1,n)
+    # @show (ix,iy)
+    Axes[e] = Axis(f1[ix,iy], aspect = DataAspect(), title = "$e", xticks = 0:100:(ns*50))
+    
+
+    lines!(Axes[e], 50 .* (1:ns), -L.*(getindex.(element_designs[i],3)))
+    this_demands = demands[demands[!, :e_idx] .== e, :]
+    println(this_demands)
+    lines!(Axes[e], 50 .* (1:ns), (collect(this_demands[!,:mu])))
+
+    text!( (10,-125), text = join(getindex.(element_designs[i],1), " - "))
+
+    text!((10,-150), text = join(getindex.(element_designs[i],2)," - ") )
+    text!((10,-175), text = join(getindex.(element_designs[i],4)," - "))
+    # global start += ns
+end
+f1

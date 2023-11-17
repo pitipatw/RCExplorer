@@ -266,7 +266,9 @@ function VizCatalog_section(catalog)
         # x[] = Point2f.(vcat.(new_cat[!,:area], new_cat[!,:gwp]))
         x1.val = new_cat[!,:Mu]/1e6
         y1[] = new_cat[!,:Gwp]
-        c1[] = new_cat[!,:fc′]
+        # c1[] = new_cat[!,:fc′]
+        c1[] = new_cat[!,:ρ]
+
         # @show x1.val[end]
 
         # z[] = new_cat[!,:fc′]
@@ -274,8 +276,8 @@ function VizCatalog_section(catalog)
         println(size(new_cat))
         return new_cat[!, :Mu], new_cat[!, :Gwp]
     end
-    s0 = scatter!(ax1, catalog[!,:Mu]/1e6,catalog[!,:Gwp], color = :red, strokewidth=0)
-    s1 = scatter!(ax1, x1,y1, color = c1, strokewidth=0, colorrange = (fc′_min,fc′_max))
+    s0 = scatter!(ax1, catalog[!,:Mu]/1e6,catalog[!,:Gwp], color = :red, strokewidth=0, alpha = 0.1)
+    s1 = scatter!(ax1, x1,y1, color = c1, strokewidth=0,alpha = 0.5)# colorrange = (fc′_min,fc′_max))
     Colorbar(figure1[2,1], s1, label = "fc′ [MPa]", labelrotation =0, vertical = false)
 
     # pairplot(catalog[!, [:Gwp]], catalog[!, [:fc′, :Area,:Mu, :Pu, :ρ]])

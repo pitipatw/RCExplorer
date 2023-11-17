@@ -1,5 +1,5 @@
 # module PostTen
-using JSON, HTTP
+using JSON #, HTTP
 using CSV, DataFrames
 using Dates
 
@@ -20,19 +20,19 @@ fc', as, ec, fpe, pu, mu, vu, embodied
 catalog = get_catalog(false);
 # catalog = DataFrame(x = 1:100,y = 1:2:200)
 N =  size(catalog,1)
-demands = JSON.parsefile("src/ReinforcedConcrete/JSON/demands_dummy.json")
+demands = JSON.parsefile("/Users/pitipatwongsittikan/dev/RCExplorer/src/PostTensioned/json/test_input.json") #src/ReinforcedConcrete/JSON/demands_dummy.json")
 # demands = (CSV.read("JSON/demands_dummy.csv", DataFrame))
-designs = Dict{Int64,Vector{Int64}}() #mapping demands index into design index in the category
+designs = Dict{Int64,DataFrame}() #mapping demands index into design index in the category
 for d_idx in eachindex(demands) 
     pu = demands[d_idx]["pu"]
     mu = demands[d_idx]["mu"]
     # vu = demands[d_idx]["vu"] # neglect shear
 
     design_i = Vector{Int64}()
-    filter1 = catalog[!,"pu"] .== pu
-    filter2 = catalog[!,"mu"] .== mu
-
-    design_i = catalog[ filter1 && filter2, :]
+    filter1 = catalog[!,"Pu"] .> pu
+    filter2 = catalog[!,"Mu"] .> mu
+    # filter3 = catalog[!,"Vu"] .== vu
+    design_i = catalog[filter1 .&& filter2, :]
 
     designs[d_idx] = copy(design_i)
 end

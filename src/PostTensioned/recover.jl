@@ -70,7 +70,7 @@ for i = 1:ns
     x1>pu &&
     x2>mu &&
     #x3>vu &&
-    x4<= ec_max, 
+    x4<= ec_max*2, 
     catalog
     )
 
@@ -113,7 +113,7 @@ for i in ne #loop each element
     #get the feasible designs for the middle section
     feasible_idx = output_results[sections[mid]]
     
-    sub_catalog = sort!(catalog[feasible_idx, :], [:carbon, :fc′, :as, :ec])
+    sub_catalog = sort!(catalog[feasible_idx, :], [:carbon,:ec])
 
     #now, loop each design in the sub catalog, see if as and fpe are available in all sections.
     #if not, remove that design from the sub catalog.
@@ -144,15 +144,32 @@ for i in ne #loop each element
         end
     end
 
-    sort!(sub_catalog, [:carbon, :fpe, :as, :fc′])
+    sort!(sub_catalog, [:carbon, :fpe, :as, :ec])
+    #get the first one, they will appear in the entire thing anyway.
+    this_fpe = sub_catalog[1,:fpe]
+    this_as = sub_catalog[1, :as]
 
     section_designs = Vector{Vector}(undef, ns)
-    for is in 1:ns
-        #select the first one because it's the lowest already.
-        select_ID= sub_catalog[1,:ID]
+    for is in eachindex(elements_to_sections[i])
+        #current section index
+        s = elements_to_sections[i][is]
+
+        feasible_idx = output_results[s]
+        sub_catalog = catalog[feasible_idx, :]
+
+        fpe_as(fpe::Float64, as::Float64) = fpe == this_fpe && as == this_as
+
+        this_catalog = filter([:fpe, :as] => fpe_as , catalog[output_results[s],:])
+
+        sort!(this_catalog, [:carbon, :ec])
+
+
+        
+        #get the first one, it's the best.
+        select_ID= this_catalog[1,:ID]
         #find lowest e for this one.
         section_designs[is] = collect(catalog[select_ID,:])
-        println(section_designs)
+        println(section_designs[is])
         end
 element_designs[i] = section_designs
 

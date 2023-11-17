@@ -1,6 +1,5 @@
 include("../Geometry/pixelgeo.jl")
 include("../Functions/embodiedCarbon.jl")
-include("../Functions/capacities.jl")
 
 """"
 get axial capacity of a section
@@ -32,7 +31,8 @@ end
 get moment capacity of a section
 Mu [kNm]
 """
-function get_Mu(compoundsection::CompoundSection, fc′::Float64, as::Float64, fpe::Float64, ec::Float64, L::Float64)
+function get_Mu(compoundsection::CompoundSection, fc′::Float64, as::Float64, fpe::Float64, ec::Float64, L::Float64;
+    Ep = 200_000,)
 
     #Pure Moment Capacity
     #concrete area
@@ -102,9 +102,12 @@ function get_Mu(compoundsection::CompoundSection, fc′::Float64, as::Float64, f
             tol = abs(c_depth - c)/c
         end
     end
+
+
+
     c_depth_global = ymax - c_depth
     new_sections = Vector{SolidSection}()
-    for sub_s in sections
+    for sub_s in compoundsection.solids
         sub_s_ymax = sub_s.ymax
         c_depth_local = sub_s_ymax - c_depth_global
         if c_depth_local > 0
@@ -171,7 +174,7 @@ function get_capacities(fc′::Float64, as::Float64, ec::Float64, fpe::Float64,
     # L = 102.5, t = 17.5, Lc = 15.,
     # L = 202.5, t = 17.5, Lc = 15.,
     T = "Beam",
-    Ep = 200_000,
+    Ep = 200_000,)
 
 
     #Calculation starts here.
@@ -199,7 +202,8 @@ function get_capacities(fc′::Float64, as::Float64, ec::Float64, fpe::Float64,
     # 0.854 kgCo2e per kgsteel
     # 7850 kg/m3
     cst = 0.854*7850 #kgCO2e/m3
-
+    
+    ac = compoundsection.area
     embodied = ( ac*cfc + as*cst )/ 1e6 
     if echo
         @printf "The pure compression capacity is %.3f [kN]\n" pu

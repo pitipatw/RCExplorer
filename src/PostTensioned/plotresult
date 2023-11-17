@@ -5,7 +5,7 @@ using Makie, GLMakie
 L = 200
 f1 = Figure(resolution = (1800,5000))
 Axes = Vector{Axis}(undef, length(ne))
-n = 6
+n = 3
 m = 3  #we have 18 elements
 # global start = 1
 for i in eachindex(ne)
@@ -24,10 +24,16 @@ for i in eachindex(ne)
     println(this_demands)
     lines!(Axes[e], 50 .* (1:ns), (collect(this_demands[!,:mu])))
 
-    text!( (10,-125), text = join(getindex.(element_designs[i],1), " - "))
 
-    text!((10,-150), text = join(getindex.(element_designs[i],2)," - ") )
-    text!((10,-175), text = join(getindex.(element_designs[i],4)," - "))
+    text!((10,-100), text = join(getindex.(element_designs[i],3), " //"))
+    text!((10,-125), text = join(getindex.(element_designs[i],1), " //"))
+    text!((10,-150), text = join(getindex.(element_designs[i],2)," //") )
+    text!((10,-175), text = join(getindex.(element_designs[i],4)," //"))
+    text!((10,-200), text = join(getindex.(element_designs[i],6)," // "))
     # global start += ns
 end
+
+
+save("constant_output3.png", f1)
+
 f1
